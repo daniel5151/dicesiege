@@ -1,0 +1,624 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"trans",
+				"translateY"
+			],
+			[
+				"c",
+				"cplexAdd"
+			],
+			[
+				"cpl",
+				"cplex"
+			],
+			[
+				"cple",
+				"cplexConstruct"
+			],
+			[
+				"cplex",
+				"cplexPrint"
+			],
+			[
+				"fra",
+				"fractionCreate"
+			],
+			[
+				"gc",
+				"gcfact"
+			],
+			[
+				"n",
+				"n_players"
+			],
+			[
+				"star",
+				"start-1"
+			],
+			[
+				"ma",
+				"main	main()"
+			],
+			[
+				"num",
+				"number"
+			],
+			[
+				"mar",
+				"margin"
+			],
+			[
+				"bor",
+				"border-style"
+			],
+			[
+				"back",
+				"background-color"
+			],
+			[
+				"ba",
+				"background-size"
+			],
+			[
+				"tex",
+				"text-align"
+			],
+			[
+				"pad",
+				"padding"
+			],
+			[
+				"border",
+				"border-radius"
+			],
+			[
+				"font-s",
+				"font-size"
+			],
+			[
+				"ce",
+				"cents"
+			],
+			[
+				"m",
+				"money"
+			],
+			[
+				"do",
+				"dollar"
+			],
+			[
+				"ide",
+				"ideal_box"
+			],
+			[
+				"for",
+				"for	For Loop"
+			],
+			[
+				"pr",
+				"printf	printf …"
+			],
+			[
+				"ideal",
+				"ideal_box"
+			],
+			[
+				"in",
+				"inArr"
+			],
+			[
+				"pre",
+				"prevNum"
+			],
+			[
+				"a",
+				"array_length"
+			],
+			[
+				"h",
+				"holdr"
+			],
+			[
+				"ar",
+				"array"
+			],
+			[
+				"mo",
+				"day_in_month"
+			],
+			[
+				"da",
+				"day_in_month"
+			],
+			[
+				"day",
+				"dayOfYear"
+			],
+			[
+				"is",
+				"isPrime"
+			],
+			[
+				"re",
+				"return"
+			],
+			[
+				"icn",
+				"include"
+			],
+			[
+				"pro",
+				"program"
+			],
+			[
+				"r",
+				"rstrip"
+			],
+			[
+				"std",
+				"stdin"
+			],
+			[
+				"wor",
+				"wordLen"
+			],
+			[
+				"siz",
+				"sizeof"
+			],
+			[
+				"p",
+				"putchar"
+			],
+			[
+				"de",
+				"define"
+			],
+			[
+				"inc",
+				"income"
+			],
+			[
+				"ite",
+				"item_no"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				]
+			],
+			[
+				"Packages/Python/Python.sublime-build",
+				"Syntax Check"
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 96.0,
+		"last_filter": "markdow",
+		"selected_items":
+		[
+			[
+				"markdow",
+				"Set Syntax: Markdown"
+			],
+			[
+				"mark",
+				"Build With: Markdown"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Discover Packages"
+			],
+			[
+				"Snippet: ",
+				"Snippet: fprintf …"
+			]
+		],
+		"width": 575.0
+	},
+	"console":
+	{
+		"height": 181.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/home/danielprilik/GitHub/dicesiege"
+	],
+	"file_history":
+	[
+		"/home/danielprilik/GitHub/daniel5151.github.io/index.html",
+		"/home/danielprilik/GitHub/daniel5151.github.io/landing_site_resources/styles.css",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A5_01/fraction.h",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A5_02/event.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A5_01/fraction.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/16/cplex.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/16/cplexMain.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/16/cplex.h",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A5_02/main.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A5_02/event.h",
+		"/home/danielprilik/Desktop/Sandbox/graphicz/main.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A4_02/poly.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/14/fixed.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/14/bisect.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A4_02/main.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A4_02/poly_big.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A4_01/avgmoney.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A5_01/main.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A1_01/reduce.c",
+		"/home/danielprilik/Desktop/Sandbox/greed-genetic/test.py",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A4_01/in.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A4_01/main.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/13/poly_h.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/13/poly.c",
+		"/home/danielprilik/Desktop/Sandbox/snakes/in.txt",
+		"/home/danielprilik/Desktop/Sandbox/snakes/snakes.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_02/factor.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_02/wrapper.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_01/array.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_01/wrapper.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/10/sieve.c",
+		"/home/danielprilik/GitHub/dismahjam/css/styles.css",
+		"/home/danielprilik/GitHub/dismahjam/index.html",
+		"/home/danielprilik/GitHub/dismahjam/js/main.js",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_01/twin.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_01/wrapper.c",
+		"/home/danielprilik/Desktop/Sandbox/multi.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_03/revlist.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A4_01/out.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/9/gcdr.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_03/wrapper.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_03/in.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_03/sudoku.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_03/test.py",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_03/out.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/8/header/powers.h",
+		"/home/danielprilik/Desktop/Sandbox/Lec7/powers.c",
+		"/home/danielprilik/Desktop/Sandbox/Lec7/main.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_03/4TheLulz/minified_no_returns.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_03/4TheLulz/minified.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_03/minified.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_01/out.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_01/in.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A3_01/test.py",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_01/tester.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/day.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/wrapper.c",
+		"/home/danielprilik/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/day.h",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/out.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/in.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/test.py",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_03/out.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_03/in.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_01/out.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_01/in.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_01/modified test.py",
+		"/home/danielprilik/Desktop/Sandbox/test.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 2/reverse.c",
+		"/home/danielprilik/2048.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/5/boiler.c",
+		"/home/danielprilik/2048",
+		"/media/removable/SD Card/Facebook Data/html/messages.htm",
+		"/media/removable/SD Card/Facebook Data/photos/348430475185993/index.htm",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 1/reduce.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 1/in.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 1/out.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 2/in.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 2/reverse_strings.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 1/reduce",
+		"/home/danielprilik/Desktop/Sandbox/Online C Unit Testing/index.html",
+		"/home/danielprilik/Desktop/Sandbox/Online C Unit Testing/server.js",
+		"/home/danielprilik/Desktop/Sandbox/Online C Unit Testing/main.js",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 1/test.py",
+		"/home/danielprilik/Desktop/Sandbox/quiz1_2012.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 2/out.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 2/test.py",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 1/test_in.py",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 1/testcases.in",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 1/testcases.out",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/Part 1/test.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/reduce.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Textbook Problems/Chapter 6/3.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/1/r1.in",
+		"/home/danielprilik/GitHub/1212/main.js",
+		"/home/danielprilik/Desktop/Sandbox/fluid.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/1/hello",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/3/boiler.c",
+		"/home/danielprilik/Desktop/Sandbox/test.md",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/2/test.md",
+		"/home/danielprilik/.config/sublime-text-3/Packages/Markdown Preview/MarkdownPreview.sublime-settings",
+		"/home/danielprilik/.config/sublime-text-3/Packages/User/MarkdownPreview.sublime-settings",
+		"/home/danielprilik/Desktop/Sandbox/vectors.py",
+		"/home/danielprilik/Desktop/Sandbox/vec.c",
+		"/home/danielprilik/Desktop/Tmp/Lectures/2/gcd2.c",
+		"/home/danielprilik/Desktop/Tmp/Lectures/2/gcd.c",
+		"/var/host/media/removable/SD Card/Dropbox/Coursework/1A/CS-137/Lectures/2/gcd.c",
+		"/var/host/media/removable/SD Card/Dropbox/Coursework/1A/CS-137/Lectures/2/touch.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/1/hello.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/1/test.txt",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/hello.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/13.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/12.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/11.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/10.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/9.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/7.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/8_incomplete.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 5/11_incomplete",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/6.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/5.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/next.sh",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/4.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/ASCII.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/boiler.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 6/12.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 6/11.c",
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 6/9.c"
+	],
+	"find":
+	{
+		"height": 40.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"?:o",
+			"?:",
+			");",
+			"m",
+			"m=-m,",
+			");",
+			"o\"",
+			"if",
+			"s",
+			"p",
+			"$",
+			"z",
+			");",
+			"s",
+			"m",
+			"s",
+			"p",
+			"n",
+			"s",
+			"printf",
+			"sgn",
+			"num",
+			"f.d",
+			"f.n",
+			"nf",
+			"di",
+			"ni",
+			"nf",
+			"df",
+			"d",
+			"n",
+			"pop",
+			"grow",
+			"flavor",
+			"contact",
+			";\n",
+			"id",
+			"CSS",
+			"#",
+			"totalmoney",
+			"return",
+			"ir",
+			"br",
+			"i",
+			"j",
+			"i",
+			"j",
+			"i",
+			"y",
+			"x",
+			"ideal_row",
+			"y",
+			"x",
+			"c",
+			"a",
+			"short",
+			", ",
+			"1",
+			"2",
+			"3",
+			"xx",
+			"HH:MM",
+			"\"",
+			"A",
+			"num_to_square",
+			"n",
+			"m",
+			"n",
+			"m",
+			"Grade",
+			"grade",
+			"d",
+			"speed",
+			"3",
+			"wrap",
+			"word wra"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"d",
+			"n",
+			"f.d",
+			"f.n",
+			"",
+			"f.n",
+			"n",
+			"d",
+			"f.d",
+			"f.n",
+			"2",
+			"4",
+			"6",
+			"xx:xx",
+			"income"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": true,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 32.0
+	},
+	"input":
+	{
+		"height": 39.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 148.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "dicesiege.sublime-project",
+	"replace":
+	{
+		"height": 74.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 157.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
