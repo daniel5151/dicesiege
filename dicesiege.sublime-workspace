@@ -4,6 +4,18 @@
 		"selected_items":
 		[
 			[
+				"s",
+				"stage"
+			],
+			[
+				"map",
+				"mapHexSize"
+			],
+			[
+				"add",
+				"addChild"
+			],
+			[
 				"trans",
 				"translateY"
 			],
@@ -279,8 +291,8 @@
 	],
 	"file_history":
 	[
-		"/home/danielprilik/GitHub/dicesiege/index.html",
 		"/home/danielprilik/GitHub/dicesiege/js/main.js",
+		"/home/danielprilik/GitHub/dicesiege/index.html",
 		"/home/danielprilik/GitHub/dicesiege/main.js",
 		"/home/danielprilik/GitHub/dicesiege/raw_input.js",
 		"/home/danielprilik/GitHub/dicesiege/util.js",
@@ -424,6 +436,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"hexDims",
 			"mapSizeX",
 			"map.height",
 			"map.width",
@@ -518,6 +531,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"hexdims",
 			"map.size.height",
 			"map.size.width",
 			"offset.y",

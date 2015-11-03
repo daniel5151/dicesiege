@@ -1,3 +1,5 @@
+var debug = true;
+
 var stage;
 
 var board_prefs = {
@@ -19,7 +21,7 @@ var board_prefs = {
 function NewHex (i,j,hexdims,offset) {
     var hex = new createjs.Shape;
 
-    var hexY = offset.y + i * hexdims.h;
+                    var hexY = offset.y + i * hexdims.h;
     if (i % 2 == 0) var hexX = offset.x + j * hexdims.w;
     else            var hexX = offset.x + j * hexdims.w + 1/2* hexdims.w;
 
@@ -33,15 +35,21 @@ function NewHex (i,j,hexdims,offset) {
         .endStroke()
         .endFill();
 
-    var text = new createjs.Text(i + ", " + j, "16px Arial", "black");
-        text.x = hexX-15;
-        text.y = hexY+5;
-        text.textBaseline = "alphabetic";
+    // grid debug
+    if (debug) {
+        var text = new createjs.Text(i + ", " + j, "16px Arial", "black");
+            text.x = hexX-15;
+            text.y = hexY+5;
+            text.textBaseline = "alphabetic";
 
-    var container = new createjs.Container();
-    container.addChild(hex);
-    container.addChild(text)
-    return container;
+        var container = new createjs.Container();
+        container.addChild(hex);
+        container.addChild(text)
+        
+        return container;
+    }
+
+    return hex;
 }
 
 function Board(prefs) {
@@ -62,6 +70,7 @@ function Board(prefs) {
                 stage.addChild(this.map[i][j]);
             }       
         }
+        stage.update()
     }
 }
 
@@ -80,7 +89,7 @@ function init() {
     board.init();
 
     // updaet canvas 24/7, b/c fuck efficiency
-    createjs.Ticker.addEventListener("tick", stage);
+    // createjs.Ticker.addEventListener("tick", stage);
 }
 
 window.onload = init;
