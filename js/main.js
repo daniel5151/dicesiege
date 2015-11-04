@@ -1,75 +1,81 @@
 var debug = true;
 
+// Global vars
 var stage;
 
+// Board preferences
 var board_prefs = {
-    size:{
+    dims:{
         h:10,
         w:10
     },
-    offset:{
-        x:60,
-        y:60
-    },
-    hexdims:{
-        s:40,
-        h:'computed',
-        w:'computed'
-    }
+    // hexsize:40
 }
 
-function NewHex (i,j,hexdims,offset) {
-    var hex = new createjs.Shape;
+function Hex (row,col,hexsize) {
+    // calculate hex dims based on size
+    hexW = Math.sqrt(3)/2 * 2 * hexsize;
+    hexH =          (3)/4 * 2 * hexsize;
 
-                    var hexY = offset.y + i * hexdims.h;
-    if (i % 2 == 0) var hexX = offset.x + j * hexdims.w;
-    else            var hexX = offset.x + j * hexdims.w + 1/2* hexdims.w;
+    // create createJS shape
+    this.shape = new createjs.Shape;
 
-    hex.graphics
+    // set co-ordinates of hex on canvas
+                      this.shape.y = row * hexH;
+    if (row % 2 == 0) this.shape.x = col * hexW;
+    else              this.shape.x = col * hexW + 1/2* hexW;
+
+    // render shape
+    this.shape.graphics
         .beginStroke("#aaa")
         .beginLinearGradientFill(
             ["#eee","#fafafa"],
-            [0, 1], 0, hexY-20, 0, hexY+30
+            [0, 1], 0, -20, 0, +30
         )
-        .drawPolyStar(hexX,hexY,hexdims.s,6,0,30)
+        .drawPolyStar(
+            0,0,
+            hexsize,
+            6,0,30
+        )
         .endStroke()
         .endFill();
 
     // grid debug
     if (debug) {
-        var text = new createjs.Text(i + ", " + j, "16px Arial", "black");
-            text.x = hexX-15;
-            text.y = hexY+5;
+        var text = new createjs.Text(row + ", " + col, hexsize/2 + "px Arial", "black");
+            text.x = board.mapContainer.x + this.shape.x - 15;  // yeah, i'm referencing board. dill with it
+            text.y = board.mapContainer.y + this.shape.y + 5;
             text.textBaseline = "alphabetic";
 
-        var container = new createjs.Container();
-        container.addChild(hex);
-        container.addChild(text)
-        
-        return container;
+        stage.addChild(text)
     }
-
-    return hex;
 }
 
 function Board(prefs) {
-    this.size = prefs.size;
-    this.offset = prefs.offset;
-    this.hexdims = {
-        s: prefs.hexdims.s,
-        w: Math.sqrt(3)/2 * 2 * prefs.hexdims.s,
-        h:            3/4 * 2 * prefs.hexdims.s
-    };
+    this.dims = prefs.dims;
+
+    this.mapContainer = new createjs.Container();
+
+    // scale grid to screen
+    prefs.hexsize = prefs.hexsize || Math.floor( Math.min(stage.canvas.width, stage.canvas.height) / prefs.dims.w) / 2;
+
+    // center the grid on the board
+    this.mapContainer.x = (stage.canvas.width  - (prefs.dims.w - 0.5) * Math.sqrt(3)/2 * 2 * prefs.hexsize) / 2;
+    this.mapContainer.y = (stage.canvas.height - (prefs.dims.h - 0.5) *          (3)/4 * 2 * prefs.hexsize) / 2;
 
     this.init = function () {
-        this.map = [];
-        for (var i = 0; i < this.size.h; i++) {
-            this.map.push([]);
-            for (var j = 0; j < this.size.w; j++) {
-                this.map[i][j] = NewHex(i, j, this.hexdims, this.offset);
-                stage.addChild(this.map[i][j]);
+        stage.addChild(this.mapContainer);
+
+        this.mapObjects = [];
+        for (var row = 0; row < this.dims.h; row++) {
+            this.mapObjects.push([]);
+            for (var col = 0; col < this.dims.w; col++) {
+                this.mapObjects[row][col] = new Hex(row, col, prefs.hexsize);
+
+                this.mapContainer.addChild(this.mapObjects[row][col].shape);
             }       
         }
+
         stage.update()
     }
 }
