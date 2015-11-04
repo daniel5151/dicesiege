@@ -4,12 +4,68 @@
 		"selected_items":
 		[
 			[
-				"s",
-				"stage"
+				"center",
+				"centerOffset"
+			],
+			[
+				"remove",
+				"removeAllChildren"
+			],
+			[
+				"new",
+				"newsize"
+			],
+			[
+				"get",
+				"getCenterOffset"
+			],
+			[
+				"re",
+				"removeAllChildren"
+			],
+			[
+				"C",
+				"Container"
+			],
+			[
+				"deb",
+				"debugContainer"
+			],
+			[
+				"de",
+				"debugContainer"
+			],
+			[
+				"Deb",
+				"Debug"
+			],
+			[
+				"debug",
+				"debugObjects"
+			],
+			[
+				"he",
+				"hexsize"
+			],
+			[
+				"hex",
+				"hexsize"
 			],
 			[
 				"map",
-				"mapHexSize"
+				"mapContainer"
+			],
+			[
+				"c",
+				"container"
+			],
+			[
+				"create",
+				"createjs"
+			],
+			[
+				"s",
+				"stage"
 			],
 			[
 				"add",
@@ -18,10 +74,6 @@
 			[
 				"trans",
 				"translateY"
-			],
-			[
-				"c",
-				"cplexAdd"
 			],
 			[
 				"cpl",
@@ -156,10 +208,6 @@
 				"isPrime"
 			],
 			[
-				"re",
-				"return"
-			],
-			[
 				"icn",
 				"include"
 			],
@@ -186,10 +234,6 @@
 			[
 				"p",
 				"putchar"
-			],
-			[
-				"de",
-				"define"
 			],
 			[
 				"inc",
@@ -422,7 +466,7 @@
 	],
 	"find":
 	{
-		"height": 39.0
+		"height": 40.0
 	},
 	"find_in_files":
 	{
@@ -436,6 +480,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"Debug",
+			"dimensions",
+			"hexdims",
 			"hexDims",
 			"mapSizeX",
 			"map.height",
@@ -531,6 +578,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"dims",
 			"hexdims",
 			"map.size.height",
 			"map.size.width",
@@ -618,7 +666,7 @@
 	"project": "dicesiege.sublime-project",
 	"replace":
 	{
-		"height": 72.0
+		"height": 74.0
 	},
 	"save_all_on_build": true,
 	"select_file":
