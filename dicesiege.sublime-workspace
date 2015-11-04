@@ -247,6 +247,14 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "js/main.js",
+			"settings":
+			{
+				"buffer_size": 4639,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -335,6 +343,8 @@
 	],
 	"file_history":
 	[
+		"/home/danielprilik/GitHub/dicesiege/dicesiege.sublime-workspace",
+		"/home/danielprilik/GitHub/dicesiege/dicesiege.sublime-project",
 		"/home/danielprilik/GitHub/dicesiege/js/main.js",
 		"/home/danielprilik/GitHub/dicesiege/index.html",
 		"/home/danielprilik/GitHub/dicesiege/main.js",
@@ -460,9 +470,7 @@
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/10.c",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/9.c",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/7.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/8_incomplete.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 5/11_incomplete",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/6.c"
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/8_incomplete.c"
 	],
 	"find":
 	{
@@ -614,8 +622,39 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "js/main.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4639,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
 			]
 		}
 	],
