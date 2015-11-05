@@ -4,6 +4,30 @@
 		"selected_items":
 		[
 			[
+				"draw",
+				"drawPolyStar"
+			],
+			[
+				"strok",
+				"strokeColor"
+			],
+			[
+				"render",
+				"renderprefs"
+			],
+			[
+				"hex",
+				"hexsize"
+			],
+			[
+				"hexsi",
+				"hexsize"
+			],
+			[
+				"he",
+				"hexsize"
+			],
+			[
 				"center",
 				"centerOffset"
 			],
@@ -42,14 +66,6 @@
 			[
 				"debug",
 				"debugObjects"
-			],
-			[
-				"he",
-				"hexsize"
-			],
-			[
-				"hex",
-				"hexsize"
 			],
 			[
 				"map",
@@ -251,7 +267,7 @@
 			"file": "js/main.js",
 			"settings":
 			{
-				"buffer_size": 4639,
+				"buffer_size": 6485,
 				"line_ending": "Unix"
 			}
 		}
@@ -631,15 +647,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4639,
+						"buffer_size": 6485,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								2158,
+								2158
 							]
 						],
 						"settings":
@@ -649,7 +665,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 936.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -723,6 +739,10 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"",
+				"~/Dropbox/Coursework/1A/CS-137/cs137.sublime-workspace"
+			]
 		],
 		"width": 380.0
 	},
