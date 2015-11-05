@@ -28,9 +28,9 @@ function Hex (props) {
 
     // renderprefs - a object containing:
     //   * strokeColor  - color of stroke
-    //   * fillType     - if solid, then use fillColor, if gradient, use gradient
-    //   * fillColor    - solid color for fill
-    //   * fillGradient - array of properties to be .apply() to .beginLinearGradientFill
+    //   * EITHER
+    //       * fillColor    - solid color for fill
+    //       * fillGradient - array of properties to be .apply() to .beginLinearGradientFill
 
     // Co-ordinates on grid are saved for later reference
     this.row     = props.row;
@@ -55,13 +55,16 @@ function Hex (props) {
     //---1---
     this.render
         .beginStroke = this.shape.graphics.beginStroke(
-            (props.renderprefs.strokeColor || "#aaa")
+            (props.renderprefs.strokeColor || "rgba(0,0,0,0)")
         ).command;
     //---2---
     this.render
-        .beginLinearGradientFill = this.shape.graphics.beginLinearGradientFill(
-            ["#eee","#fafafa"],
-            [0, 1], 0, -20, 0, +30
+        // .beginLinearGradientFill = this.shape.graphics.beginLinearGradientFill(
+        //     ["#eee","#fafafa"],
+        //     [0, 1], 0, -20, 0, +30
+        // ).command;
+        .beginFill = this.shape.graphics.beginFill(
+            (props.renderprefs.fillColor || "rgb("+150+","+Math.floor(255*(this.row/board.dims.h))+","+Math.floor(255*(this.col/board.dims.w))+")")
         ).command;
     //---3---
     this.render
@@ -171,7 +174,7 @@ function Board(prefs) {
                     col:col,
                     hexsize:this.hexsize,
                     renderprefs:{
-                        strokeColor:"blue"
+                        // strokeColor:"blue"
                     }
                 });
                 this.mapContainer.addChild(this.mapObjects[row][col].shape);
@@ -231,7 +234,7 @@ function init() {
     stage.canvas.width = window.innerWidth;
     stage.canvas.height = window.innerHeight;
     
-    // Call the function to craete the hex grid
+    // Call the function to create the hex grid
     board = new Board(board_prefs);
     board.init();
 
