@@ -1,8 +1,57 @@
-var debug = true;
-
 // Global vars
 var stage;
 var board;
+
+var board_dimensions = {w:50,h:30};
+
+var debug = {
+    mode:'province',
+    // all code here is sphagetti
+    // bring your forks and tread softly
+    GridText:function(row, col, hexsize) {
+        // calculate hex dims based on size
+        var hexW = Math.sqrt(3)/2 * 2 * hexsize;
+        var hexH =          (3)/4 * 2 * hexsize;
+
+        // set co-ordinates of hex on canvas
+                          var y = row * hexH;
+        if (row % 2 == 0) var x = col * hexW;
+        else              var x = col * hexW + 1/2* hexW;
+
+        if (debug.mode === 'cords'   ) this.text = new createjs.Text(row + ", " + col, hexsize/2 + "px Arial", "black");
+        if (debug.mode === 'province') this.text = new createjs.Text(board.mapObjects[row][col].province, hexsize/2 + "px Arial", "black");
+
+        var offset = board.get.offset();
+
+        this.text.x            = offset.x + x - hexsize/2;
+        this.text.y            = offset.y + y + hexsize/8;
+        this.text.textBaseline = "alphabetic";
+
+        this.set = {};
+        var self = this;
+        this.recalc = function () {
+            var offset = board.get.offset()
+
+            // calculate hex dims based on size
+            var hexW = Math.sqrt(3)/2 * 2 * board.hexsize;
+            var hexH =          (3)/4 * 2 * board.hexsize;
+
+            // set co-ordinates of hex on canvas
+                              var y = row * hexH;
+            if (row % 2 == 0) var x = col * hexW;
+            else              var x = col * hexW + 1/2* hexW;
+
+            self.text.x = offset.x + x - board.hexsize/2;
+            self.text.y = offset.y + y + board.hexsize/8;
+
+            self.text.font = board.hexsize/2 + "px Arial";
+        };
+    },
+    log:function(message) {
+        if (debug.mode) console.log(message);
+    }
+}
+
 
 function Hex (props) {
     var self = this;
@@ -16,6 +65,8 @@ function Hex (props) {
     // col          - column in map
 
     // hexsize      - size of hex
+
+    // province this hex belongs to
 
     // renderprefs - a object containing:
     //   * strokeColor  - color of stroke
@@ -39,7 +90,18 @@ function Hex (props) {
                                this.shape.y = this.row * this.hexH;
         if (this.row % 2 == 0) this.shape.x = this.col * this.hexW;
         else                   this.shape.x = this.col * this.hexW + 1/2* this.hexW;
+
+        // calculate co-ordinates of edges
+        this.edges = [
+            { y:this.shape.y - (this.hexH / 2), x:this.shape.x - (this.hexW / 2) }, // upper left
+            { y:this.shape.y - (this.hexH / 2), x:this.shape.x + (this.hexW / 2) }, // upper right
+            { y:this.shape.y                  , x:this.shape.x + (this.hexW / 2) }, // middle right
+            { y:this.shape.y + (this.hexH / 2), x:this.shape.x + (this.hexW / 2) }, // lower right
+            { y:this.shape.y + (this.hexH / 2), x:this.shape.x - (this.hexW / 2) }, // lower left
+            { y:this.shape.y                  , x:this.shape.x - (this.hexW / 2) }, // middle left
+        ];
     }
+
     this.recalcSizeAndPos(props.hexsize);
 
     // get command references so we can modify shape props on the fly
@@ -86,181 +148,180 @@ function Hex (props) {
         self.render.drawPolyStar.radius = hexsize+1;
         self.recalcSizeAndPos(hexsize)
     }
-
-    if (debug) this.set.fillColor("rgb("
-                    +175
-                    +","+this.province*4
-                    +","+this.province*4
-                +")");
 }
 
-var Debug = {
-    GridText:function(row, col, hexsize, mode) {
-        // calculate hex dims based on size
-        var hexW = Math.sqrt(3)/2 * 2 * hexsize;
-        var hexH =          (3)/4 * 2 * hexsize;
-
-        // set co-ordinates of hex on canvas
-                          var y = row * hexH;
-        if (row % 2 == 0) var x = col * hexW;
-        else              var x = col * hexW + 1/2* hexW;
-
-        if (mode === 'cords'   ) this.text = new createjs.Text(row + ", " + col, hexsize/2 + "px Arial", "black");
-        if (mode === 'province') this.text = new createjs.Text(board.mapObjects[row][col].province, hexsize/2 + "px Arial", "black");
-
-        this.text.x            = board.offset.x + x - hexsize/2;  // yeah, i'm referencing board. dill with it
-        this.text.y            = board.offset.y + y + hexsize/8;
-        this.text.textBaseline = "alphabetic";
-
-        this.set = {};
-        var self = this;
-        this.recalc = function () {
-            // calculate hex dims based on size
-            var hexW = Math.sqrt(3)/2 * 2 * board.hexsize;
-            var hexH =          (3)/4 * 2 * board.hexsize;
-
-            // set co-ordinates of hex on canvas
-                              var y = row * hexH;
-            if (row % 2 == 0) var x = col * hexW;
-            else              var x = col * hexW + 1/2* hexW;
-
-            self.text.x = board.offset.x + x - board.hexsize/2;
-            self.text.y = board.offset.y + y + board.hexsize/8;
-
-            self.text.font = board.hexsize/2 + "px Arial";
-        };
-    }
-}
+/*
+* ---------------------------------------- BOARD ---------------------------------------------
+* 
+* This constructs an object that handles map rendering
+* 
+* Passable Arguments
+* ------------------
+* Req | Type       | Name              | Description
+* ----| ---------- | ----------------- | -----------------------------------------------------
+*   ! |            | prefs             | - Object containing all properties of board
+*   ! | {Map}      |    map            |   - Object containing map (as specified in Map)
+*
+*   ! | {int}      |    hexsize        |   - Radius of hexagons to be rendered
+*     | {bool}     |    scalable       |   - Allow sacling the board to full canvas
+*     |            |    offset         |   - Object with x-y offset from top left of canvas
+*     | {int}      |        x          |     - x offset
+*     | {int}      |        y          |     - y offset
+*   ! | {colors[]} |    pallette       |   - How to color each players territorry 
+* 
+* 
+* Properties
+* ------------------
+* Type       | Name              | Description
+* ---------- | ----------------- | -----------------------------------------------------------
+* {Map}      | map               | - Object containing map (as specified in Map)
+*
+* {int}      | hexsize           | - Radius of hexagons to be rendered
+* {bool}     | scalable          | - Allow sacling the board to full canvas
+*
+* {Hex[][]}  | mapObjects        | - 2D array with references to rendered Hexes
+* {createJS} | mapContainer      | - CreateJS Container of all Hexes
+* 
+* 
+* Methods
+* ----------------
+* Return Type | Name          | Description
+* ----------- | ------------- | ----------------
+* {void}      | init          | initialize board
+*             |               |
+* {void}      | resize        | resize board
+* {void}      | set.offset    | set xy offset
+* {void}      | set.palette   | set palette
+* {x:x,y:y}   | get.offset    | retrieve offset
+*
+*/
 
 function Board(prefs) {
-    this.dims     = prefs.dims;
-    this.hexsize  = prefs.hexsize;
-    this.offset   = prefs.offset;
-    this.scalable = (prefs.hexsize)?false:true;
-    
-    this.colormap = prefs.colormap;
+    var self = this;
 
-    // make a new createJS conatiner for the map-tiles
-    this.mapContainer = new createjs.Container();
+    // NON RENDERABLES
+    // actual gamestate map
+    this.map = prefs.map;
 
-    // set offset for map on canvas
-    this.mapContainer.x = (prefs.offset)?prefs.offset.x:0;
-    this.mapContainer.y = (prefs.offset)?prefs.offset.y:0;
+    // RENDERABLES
+        this.hexsize  = prefs.hexsize;
+        this.scalable = prefs.hexsize || true;
 
-    this.centerOffset = function () {
-        this.offset = {
-            x:(stage.canvas.width  - (this.dims.w - 0.5) * Math.sqrt(3)/2 * 2 * this.hexsize) / 2,
-            y:(stage.canvas.height - (this.dims.h - 0.5) *          (3)/4 * 2 * this.hexsize) / 2
-        };
-        this.mapContainer.x = this.offset.x;
-        this.mapContainer.y = this.offset.y;
-    }
+        // make a new createJS conatiner for the map-tiles
+        this.mapContainer = new createjs.Container();
 
-    this.init = function () {
-        // possibly scale grid to screen
-        this.hexsize = 
-            this.hexsize
-            ||
-            Math.floor(
-                Math.min(
-                    stage.canvas.width  / this.dims.w,
-                    stage.canvas.height / this.dims.h
-                ) / 1.75
-            );
+        // palette for rendering
+        this.palette = prefs.palette;
 
-
-        // center the grid on the board
-        this.centerOffset();
-
-        // Now, we can actually draw the grid
-        // add the map contiane to the scene
-        stage.addChild(this.mapContainer);
-
-        // Generate actual colormap from given map and palette
-        var hexColor = [];
-        for (var row = 0; row < this.dims.h; row++) {
-            hexColor.push([]);
-            for (var col = 0; col < this.dims.w; col++) {
-                hexColor[row][col] = this.colormap.palette[this.colormap.map[row][col].owner];
-            }
-        }
-
-        // populate the container, and keep track of tiles in mapObjects
-        this.mapObjects = [];
-        for (var row = 0; row < this.dims.h; row++) {
-            this.mapObjects.push([]);
-            for (var col = 0; col < this.dims.w; col++) {
-                this.mapObjects[row][col] = new Hex({
-                    row:row,
-                    col:col,
-                    hexsize:this.hexsize,
-                    renderprefs:{
-                        fillColor: hexColor[row][col]
-                    },
-                    province: this.colormap.map[row][col].province
-                });
-                this.mapContainer.addChild(this.mapObjects[row][col].shape);
-            }       
-        }
-
-        //----------------- DEBUG
-            if (debug) {
-                this.debugContainer = new createjs.Container();
-                stage.addChild(this.debugContainer)
-
-                this.debugObjects = [];
-                for (var row = 0; row < this.dims.h; row++) {
-                    this.debugObjects.push([]);
-                    for (var col = 0; col < this.dims.w; col++) {
-                        this.debugObjects[row][col] = new Debug.GridText(row, col, this.hexsize, 'province');
-
-                        this.debugContainer.addChild(this.debugObjects[row][col].text);
-                    }       
-                }
-            }
-        //------------- END DEBUG
-
-        stage.update();
-    }
-
+    // METHODS
     this.resize = function (canvasW, canvasH, hexsize){
         stage.canvas.width = canvasW;
         stage.canvas.height = canvasH;
 
-        this.centerOffset();
+        this.set.offset('center');
 
         if (hexsize === 'towindow') {
             if (this.scalable)
                 this.hexsize = Math.floor(
                     Math.min(
-                        stage.canvas.width  / this.dims.w,
-                        stage.canvas.height / this.dims.h
+                        stage.canvas.width  / this.map.dims.w,
+                        stage.canvas.height / this.map.dims.h
                     ) / 1.75
                 );
         } else                  this.hexsize = hexsize;
 
-        for (var row = 0; row < this.dims.h; row++) {
-            for (var col = 0; col < this.dims.w; col++) {
+        for (var row = 0; row < this.map.dims.h; row++) {
+            for (var col = 0; col < this.map.dims.w; col++) {
                            this.mapObjects  [row][col].set.hexsize(this.hexsize);
-                if (debug) this.debugObjects[row][col].recalc();
+                if (debug.mode) this.debugObjects[row][col].recalc();                        //----------- DEBUG
             }       
         }
 
         stage.update();
     }
 
-    this.recolor = function (colormap) {
-        for (var row = 0; row < this.dims.h; row++) {
-            for (var col = 0; col < this.dims.w; col++) {
-                this.mapObjects[row][col].set.fillColor(
-                    colormap.palette[colormap.map[row][col]]
+    // Getters and Setters
+    this.set = {};
+    this.get = {};
+    this.set.offset = function (offset) {
+        if (offset == 'center') {
+            self.mapContainer.x = (stage.canvas.width  - (self.map.dims.w - 0.5) * Math.sqrt(3)/2 * 2 * self.hexsize) / 2;
+            self.mapContainer.y = (stage.canvas.height - (self.map.dims.h - 0.5) *          (3)/4 * 2 * self.hexsize) / 2;
+        } else {
+            self.mapContainer.x = offset.x
+            self.mapContainer.y = offset.y
+        }
+    }
+    this.get.offset = function () {
+        return {
+            x:self.mapContainer.x,
+            y:self.mapContainer.y
+        }
+    }
+    this.set.color = function (palette) {
+        for (var row = 0; row < this.map.dims.h; row++) {
+            for (var col = 0; col < this.map.dims.w; col++) {
+                self.mapObjects[row][col].set.fillColor(
+                    palette[colormap.map[row][col]]
                 );
             }       
         }
     }
+
+
+    // Init Rendering
+    // possibly scale grid to screen
+    this.hexsize = 
+        this.hexsize
+        ||
+        Math.floor(
+            Math.min(
+                stage.canvas.width  / this.map.dims.w,
+                stage.canvas.height / this.map.dims.h
+            ) / 1.75
+        );
+
+
+    // center the grid on the board
+    this.set.offset('center');
+
+    // Now, we can actually draw the grid
+    // add the map contiane to the scene
+    stage.addChild(this.mapContainer);
+
+    // If there is no colormap, generate a colormap from given map and palette
+    var colormap = [];
+    for (var row = 0; row < this.map.dims.h; row++) {
+        colormap.push([]);
+        for (var col = 0; col < this.map.dims.w; col++) {
+            colormap[row][col] = this.palette[this.map.tileMap[row][col].owner];
+        }
+    }
+
+    // populate the container, and keep track of tiles in mapObjects
+    this.mapObjects = [];
+    for (var row = 0; row < this.map.dims.h; row++) {
+        this.mapObjects.push([]);
+        for (var col = 0; col < this.map.dims.w; col++) {
+            this.mapObjects[row][col] = new Hex({
+                row:row,
+                col:col,
+                hexsize:this.hexsize,
+                renderprefs:{
+                    fillColor: colormap[row][col]
+                },
+                province: this.map.tileMap[row][col].province
+            });
+            this.mapContainer.addChild(this.mapObjects[row][col].shape);
+        }       
+    }
+
+    stage.update();
 }
 
-function generateMap(dims, players, seed) {
+function Map(dims, players, seed) {
+    this.dims = dims;
+
     // Generate array of -1
     var map = Array.apply(null, Array(dims.h)).map(function(){
         return Array.apply(null, Array(dims.w)).map(Number.prototype.valueOf, -1)
@@ -382,6 +443,7 @@ function generateMap(dims, players, seed) {
             }
         }
 
+        // check if there are any more provinces left to fill, and if not, break.
         var emptycount = dims.h*dims.w;
         for (var row = 0; row < dims.h; row++) {
             for (var col = 0; col < dims.w; col++) {
@@ -389,60 +451,11 @@ function generateMap(dims, players, seed) {
             }
         }
         if (emptycount == 0) break;
-        console.log(emptycount);
+        debug.log(emptycount);
     }
 
-
-    // var count = 1;
-    // while (count > 0) {
-    //     // clone map
-    //     var oldmap = []
-    //     for (var row = 0; row < dims.h; row++) {
-    //         oldmap.push([]);
-    //         for (var col = 0; col < dims.w; col++) {
-    //             oldmap[row][col] = map[row][col];
-    //         }
-    //     }
-
-    //     count = 0;
-    //     for (var row = 0; row < dims.h; row++) {
-    //         for (var col = 0; col < dims.w; col++) {
-                
-    //             if (map[row][col] === -1) {
-    //                 count++;
-    //                 var surroundingColors = [];
-    //                 for (var dr = -2; dr <= 2; dr++) {
-    //                     for (var dc = -2; dc <= 2; dc++) {
-    //                         if (row + dr < 0 || row + dr > dims.h-1) continue;
-    //                         if (col + dc < 0 || col + dc > dims.w-1) continue;
-
-    //                         if (oldmap[row + dr][col + dc] !== -1) {
-    //                             var dopush = true;
-    //                             for (var i2 = 0; i2 < surroundingColors.length; i2++) {
-    //                                 if ( oldmap[row+dr][col+dc] == surroundingColors[i] ) dopush = false;
-    //                             }
-    //                             if (dopush) surroundingColors.push( oldmap[row+dr][col+dc] )
-    //                         }
-    //                     }
-    //                 }
-    //                 if (surroundingColors.length > 0) {
-    //                     map[row][col] = surroundingColors[Math.round(Math.random() * (surroundingColors.length-1))];
-    //                 }
-    //             }
-
-    //         }
-    //     }
-    // }
-
-
-    return map;
-}
-function generateColorMap(map, palette) {
-    palette.unshift('blue');
-    return {
-        map:map,
-        palette:palette
-    };
+    this.nProvinces = provinceID-1;
+    this.tileMap = map;
 }
 
 function init() {
@@ -451,24 +464,44 @@ function init() {
     stage.canvas.width = window.innerWidth;
     stage.canvas.height = window.innerHeight;
     
-    // generate colormap
-    var colormap = generateColorMap(generateMap({h:25,w:50},2), ["brown","green"]);
+    // generate map
+    var map = new Map(board_dimensions,2);
 
     // Call the function to create the hex grid
     board = new Board({
-        dims:{
-            h:25,
-            w:50
-        },
-        colormap:colormap
+        dims:board_dimensions,
+        map:map,
+        palette:['blue','brown','green']
         // hexsize:25
     });
-    board.init();
 
     // resize means we have to rescale everything
     window.addEventListener('resize', function(e){    
         board.resize(window.innerWidth, window.innerHeight, 'towindow');
     }, false);
+
+    // Display Debug statistics
+    if (debug.mode) {
+        board.debugContainer = new createjs.Container();
+        stage.addChild(board.debugContainer)
+
+        board.debugObjects = [];
+        for (var row = 0; row < board.map.dims.h; row++) {
+            board.debugObjects.push([]);
+            for (var col = 0; col < board.map.dims.w; col++) {
+                board.debugObjects[row][col] = new debug.GridText(row, col, board.hexsize);
+                board.debugContainer.addChild(board.debugObjects[row][col].text);
+
+                if (debug.mode === 'province') board.mapObjects[row][col].set.fillColor("rgba("
+                    +0
+                    +","+Math.floor(255*(row/board.map.dims.h))
+                    +","+Math.floor(255*(col/board.map.dims.w))
+                    +","+(board.mapObjects[row][col].province/board.map.nProvinces)
+                +")");
+            }       
+        }
+        stage.update();
+    }
 }
 
 window.onload = init;
@@ -500,3 +533,5 @@ function colorsplotch (row,col) {
         }
     }
 }
+
+function debugLog(message) { if (debug.mode) console.log(message); }
