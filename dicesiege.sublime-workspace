@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"deb",
+				"debug"
+			],
+			[
 				"draw",
 				"drawPolyStar"
 			],
@@ -50,10 +54,6 @@
 			[
 				"C",
 				"Container"
-			],
-			[
-				"deb",
-				"debugContainer"
 			],
 			[
 				"de",
@@ -267,7 +267,7 @@
 			"file": "js/main.js",
 			"settings":
 			{
-				"buffer_size": 6485,
+				"buffer_size": 7822,
 				"line_ending": "Unix"
 			}
 		}
@@ -359,9 +359,9 @@
 	],
 	"file_history":
 	[
+		"/home/danielprilik/GitHub/dicesiege/js/main.js",
 		"/home/danielprilik/GitHub/dicesiege/dicesiege.sublime-workspace",
 		"/home/danielprilik/GitHub/dicesiege/dicesiege.sublime-project",
-		"/home/danielprilik/GitHub/dicesiege/js/main.js",
 		"/home/danielprilik/GitHub/dicesiege/index.html",
 		"/home/danielprilik/GitHub/dicesiege/main.js",
 		"/home/danielprilik/GitHub/dicesiege/raw_input.js",
@@ -647,15 +647,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6485,
+						"buffer_size": 7822,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2158,
-								2158
+								122,
+								135
 							]
 						],
 						"settings":
@@ -665,7 +665,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 936.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
