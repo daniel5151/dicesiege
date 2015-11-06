@@ -256,11 +256,24 @@ var renderObjects = {};
 //                      |      |                                                        //
 var renderContainers = {};
 
-
-
+// -------------------------------------- render -------------------------------------- //
+// Description: Global container for rendering methods of renderable structures         //
+//                                                                                      //
+// Object Structurekey: "value",                                                        //
+//    - Each renderable should have a self titled propery containing an its rendering   //
+//      methods                                                                         //
+//    - Renderables whose rendering properties may be modified must have the            //
+//      subproperty `.set` containing methods in the format `.prop(val)` such that the  //
+//      method changes the renderable's `prop` property to `val`                        //
+//        - Directly modifying renderable's properties should not be done               //
+//    - Renderables may have methods under the subproperty `.get` in the format         //
+//      `.prop()` such that the method return the property `prop` of the Renderables    //
+//    - Auxillary methods used by core methods under renderables must be declared under //
+//      the renderable namespace                                                        //
+//                                                                                      //
 var render = {};
-render.board = {};
 
+render.board = {};
 render.board.init = function (map) {
     // make a new createJS conatiner for the map-tiles
     renderContainers.map = new createjs.Container();
