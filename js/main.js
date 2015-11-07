@@ -2,7 +2,7 @@
 var stage;
 var board;
 
-var board_dimensions = {w:50,h:30};
+var board_dimensions = {w:15,h:10};
 
 var debug = {
     mode:'province',
@@ -19,7 +19,7 @@ var debug = {
         else              var x = col * hexW + 1/2* hexW;
 
         if (debug.mode === 'cords'   ) this.text = new createjs.Text(row + ", " + col, hexsize/2 + "px Arial", "black");
-        if (debug.mode === 'province') this.text = new createjs.Text(renderObjects.map[row][col].province, hexsize/2 + "px Arial", "black");
+        if (debug.mode === 'province') this.text = new createjs.Text(renderPrefs.board.map.tileMap[row][col].province, hexsize/2 + "px Arial", "black");
 
         var offset = render.board.get.offset();
 
@@ -51,151 +51,6 @@ var debug = {
         if (debug.mode) console.log(message);
     }
 }
-
-
-function Hex (props) {
-    var self = this;
-
-    // create createJS shape
-    this.shape = new createjs.Shape;
-
-    // props has the following keys:
-    
-    // row          - row in map
-    // col          - column in map
-
-    // hexsize      - size of hex
-
-    // province this hex belongs to
-
-    // renderprefs - a object containing:
-    //   * strokeColor  - color of stroke
-    //   * EITHER
-    //       * fillColor    - solid color for fill
-    //       * fillGradient - array of properties to be .apply() to .beginLinearGradientFill
-
-    // Co-ordinates on grid are saved for later reference
-    this.row     = props.row;
-    this.col     = props.col;
-
-    // what province is this hex in
-    this.province = props.province;
-
-    this.recalcSizeAndPos = function (hexsize) {
-        // calculate hex dims based on size
-        this.hexW = Math.sqrt(3)/2 * 2 * hexsize;
-        this.hexH =          (3)/4 * 2 * hexsize;
-
-        // get co-ordinates of hex on canvas based on size and pos on grid
-                               this.shape.y = this.row * this.hexH;
-        if (this.row % 2 == 0) this.shape.x = this.col * this.hexW;
-        else                   this.shape.x = this.col * this.hexW + 1/2* this.hexW;
-
-        // calculate co-ordinates of edges
-        this.edges = [
-            { y:this.shape.y - (this.hexH / 2), x:this.shape.x - (this.hexW / 2) }, // upper left
-            { y:this.shape.y - (this.hexH / 2), x:this.shape.x + (this.hexW / 2) }, // upper right
-            { y:this.shape.y                  , x:this.shape.x + (this.hexW / 2) }, // middle right
-            { y:this.shape.y + (this.hexH / 2), x:this.shape.x + (this.hexW / 2) }, // lower right
-            { y:this.shape.y + (this.hexH / 2), x:this.shape.x - (this.hexW / 2) }, // lower left
-            { y:this.shape.y                  , x:this.shape.x - (this.hexW / 2) }, // middle left
-        ];
-    }
-
-    this.recalcSizeAndPos(props.hexsize);
-
-    // get command references so we can modify shape props on the fly
-    this.render = {
-        //---1---
-        beginStroke: this.shape.graphics.beginStroke(
-            (props.renderprefs.strokeColor || "rgba(0,0,0,0)")
-        ).command,
-        //---2---
-        // beginLinearGradientFill: this.shape.graphics.beginLinearGradientFill(
-        //     ["#eee","#fafafa"],
-        //     [0, 1], 0, -20, 0, +30
-        // ).command,
-        beginFill: this.shape.graphics.beginFill(
-            (props.renderprefs.fillColor
-                || 
-                "rgb("
-                    +150
-                    +","+Math.floor(255*(this.row/board.dims.h))
-                    +","+Math.floor(255*(this.col/board.dims.w))
-                +")")
-        ).command,
-        //---3---
-        drawPolyStar: this.shape.graphics.drawPolyStar(
-            0,0,
-            props.hexsize+1, // +1 for no outline
-            6,0,30
-        ).command
-    }
-    //---wrapping up code---
-    this.shape.graphics
-        .endStroke()
-        .endFill();
-    
-    // make helper function to change props
-    this.set = {};
-    this.get = {};
-
-    this.set.strokeColor = function (color)   {        self.render.beginStroke.style = color; }
-    this.get.strokeColor = function ()        { return self.render.beginStroke.style;         }
-    this.set.fillColor   = function (color)   {        self.render.beginFill.style = color; }
-    this.get.fillColor   = function ()        { return self.render.beginFill.style;         }
-    this.set.hexsize     = function (hexsize) { 
-        self.render.drawPolyStar.radius = hexsize+1;
-        self.recalcSizeAndPos(hexsize)
-    }
-}
-
-/*
-* ---------------------------------------- BOARD ---------------------------------------------
-* 
-* This constructs an object that handles map rendering
-* 
-* Passable Arguments
-* ------------------
-* Req | Type       | Name              | Description
-* ----| ---------- | ----------------- | -----------------------------------------------------
-*   ! |            | prefs             | - Object containing all properties of board
-*   ! | {Map}      |    map            |   - Object containing map (as specified in Map)
-*
-*   ! | {int}      |    hexsize        |   - Radius of hexagons to be rendered
-*     | {bool}     |    scalable       |   - Allow sacling the board to full canvas
-*     |            |    offset         |   - Object with x-y offset from top left of canvas
-*     | {int}      |        x          |     - x offset
-*     | {int}      |        y          |     - y offset
-*   ! | {colors[]} |    pallette       |   - How to color each players territorry 
-* 
-* 
-* Properties
-* ------------------
-* Type       | Name              | Description
-* ---------- | ----------------- | -----------------------------------------------------------
-* {Map}      | map               | - Object containing map (as specified in Map)
-*
-* {int}      | hexsize           | - Radius of hexagons to be rendered
-* {bool}     | scalable          | - Allow sacling the board to full canvas
-*
-* {Hex[][]}  | mapObjects        | - 2D array with references to rendered Hexes
-* {createJS} | mapContainer      | - CreateJS Container of all Hexes
-* 
-* 
-* Methods
-* ----------------
-* Return Type | Name          | Description
-* ----------- | ------------- | ----------------
-* {void}      | init          | initialize board
-*             |               |
-* {void}      | resize        | resize board
-* {void}      | set.offset    | set xy offset
-* {void}      | set.palette   | set palette
-* {x:x,y:y}   | get.offset    | retrieve offset
-*
-*/
-
 
 // ---------------------------------- renderPrefs --------------------------------------- //
 //                                                                                        //
@@ -274,7 +129,134 @@ var renderContainers = {};
 var render = {};
 
 render.board = {};
+render.board.shapes = {};
+render.board.shapes.Hex = function (props) {
+    var self = this;
+
+    // create createJS shape
+    this.shape = new createjs.Shape;
+
+    // Co-ordinates on grid are saved for later reference
+    this.row = props.row;
+    this.col = props.col;
+
+    this.recalcSizeAndPos = function (hexsize) {
+        // calculate hex dims based on size
+        this.hexW = Math.sqrt(3)/2 * 2 * hexsize;
+        this.hexH =          (3)/4 * 2 * hexsize;
+
+        // get co-ordinates of hex on canvas based on size and pos on grid
+                               this.shape.y = this.row * this.hexH;
+        if (this.row % 2 == 0) this.shape.x = this.col * this.hexW;
+        else                   this.shape.x = this.col * this.hexW + 1/2* this.hexW;
+
+        // calculate co-ordinates of edges
+        this.edges = [
+            { y: - hexsize/2, x: - this.hexW/2}, // upper left
+            { y: - hexsize  , x: - 0          }, // top
+            { y: - hexsize/2, x: + this.hexW/2}, // upper right
+            { y: + hexsize/2, x: + this.hexW/2}, // lower right
+            { y: + hexsize  , x: - 0          }, // bottom
+            { y: + hexsize/2, x: - this.hexW/2}, // lower left
+        ];
+    }
+
+    this.recalcSizeAndPos(props.hexsize);
+
+    // we save command references so we can change the properies
+    // of the createJS object without having to reinitialize
+    // the entire rendering queue each time
+
+    // First, we define the commands that render the hexagon.
+    // This step is row-col independant, so we just write it as
+    // static declaration.
+    this.renderCommands = {
+        // Render the shape. This is position invariant
+        beginFill: this.shape.graphics.beginFill(
+                (props.renderprefs.fillColor
+                    || 
+                    "rgb("
+                        +150
+                        +","+Math.floor(255*(this.row/board.dims.h))
+                        +","+Math.floor(255*(this.col/board.dims.w))
+                    +")")
+            ).command,
+        drawPolyStar: this.shape.graphics.drawPolyStar(
+                0,0,
+                props.hexsize, // +1 for no outline
+                6,0,30
+            ).command
+    }
+    this.shape.graphics
+        .endFill();
+
+    // Now, we define the commands that render the borders of the
+    // province.
+    this.renderCommands.boderStrokeStyle = this.shape.graphics.setStrokeStyle(
+        2, 'round'
+    ).command
+    this.renderCommands.borderStroke = this.shape.graphics.beginStroke(
+        (props.renderprefs.strokeColor || "rgba(0,0,0,1)")
+    ).command;
+
+    // check tiles directly next to tile
+    this.renderCommands.borders = [];
+    var tileNo = 4;
+    for (var dr = -1; dr <= 1; dr++) {
+        var range = [0,0];
+        if (dr == 0) { 
+            range = [-1,1];
+        } else if (this.row % 2 == 1) { // odd row
+            range = [0,1];
+        } else if (this.row % 2 == 0) { // even row
+            range = [-1,0];
+        }
+        
+        for (var dc = range[0] ; dc <= range[1] ; dc++, tileNo++) {
+            if (dr == 0 && dc == 0) {
+                tileNo--;
+                continue;
+            }
+            // Check Out of Bounds
+            if (this.row + dr < 0 || this.row + dr > renderPrefs.board.map.dims.h-1) continue;
+            if (this.col + dc < 0 || this.col + dc > renderPrefs.board.map.dims.w-1) continue;
+
+            if (renderPrefs.board.map.tileMap[this.row+dr][this.col+dc].province 
+                !== renderPrefs.board.map.tileMap[this.row][this.col].province) {
+                this.renderCommands.borders.push({
+                    moveTo:this.shape.graphics.moveTo(
+                        this.edges[1].x,
+                        this.edges[1].y
+                    ).command,
+                    lineTo:this.shape.graphics.lineTo(
+                        this.edges[0].x,
+                        this.edges[0].y
+                    ).command
+                });
+            }
+        }
+    }
+
+    this.shape.graphics
+        .endStroke();
+    
+    // make helper function to change props
+    this.set = {};
+    this.get = {};
+
+    this.set.strokeColor = function (color)   {        self.renderCommands.beginStroke.style = color; }
+    this.get.strokeColor = function ()        { return self.renderCommands.beginStroke.style;         }
+    this.set.fillColor   = function (color)   {        self.renderCommands.beginFill.style = color; }
+    this.get.fillColor   = function ()        { return self.renderCommands.beginFill.style;         }
+    this.set.hexsize     = function (hexsize) { 
+        self.renderCommands.drawPolyStar.radius = hexsize;
+        self.recalcSizeAndPos(hexsize)
+    }
+}
 render.board.init = function (map) {
+    // check to see if there is already a board, and if there is, start freshhhh
+    if (renderContainers.map) { stage.removeChildAt(0); }
+
     // make a new createJS conatiner for the map-tiles
     renderContainers.map = new createjs.Container();
     // add the map contiane to the scene
@@ -310,7 +292,7 @@ render.board.init = function (map) {
     for (var row = 0; row < renderPrefs.board.map.dims.h; row++) {
         renderObjects.map.push([]);
         for (var col = 0; col < renderPrefs.board.map.dims.w; col++) {
-            renderObjects.map[row][col] = new Hex({
+            renderObjects.map[row][col] = new render.board.shapes.Hex({
                 row:row,
                 col:col,
                 hexsize:renderPrefs.board.hexsize,
@@ -363,10 +345,11 @@ render.board.set.offset = function (offset) {
     }
 }
 render.board.set.color = function (palette) {
+    renderPrefs.board.palette = palette;
     for (var row = 0; row < renderPrefs.board.map.dims.h; row++) {
         for (var col = 0; col < renderPrefs.board.map.dims.w; col++) {
             renderObjects.map[row][col].set.fillColor(
-                renderPrefs.board.palette[renderPrefs.board.map[row][col].owner]
+                palette[renderPrefs.board.map.tileMap[row][col].owner]
             );
         }       
     }
@@ -552,7 +535,7 @@ function init() {
                     +0
                     +","+Math.floor(255*(row/renderPrefs.board.map.dims.h))
                     +","+Math.floor(255*(col/renderPrefs.board.map.dims.w))
-                    +","+(renderObjects.map[row][col].province/renderPrefs.board.map.nProvinces)
+                    +","+(renderPrefs.board.map.tileMap[row][col].province/renderPrefs.board.map.nProvinces)
                 +")");
             }       
         }
