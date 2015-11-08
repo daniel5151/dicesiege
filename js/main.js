@@ -2,10 +2,17 @@
 var stage;
 var board;
 
-var board_dimensions = {w:15,h:10};
+var SCALE = 10;
+
+var board_dimensions = {w:3*SCALE,h:2*SCALE};
 
 var debug = {
-    mode:'province',
+    mode:{
+        province  :false,  // don't use together
+        cords     :false,    // don't use together
+        colorfull :false,
+        log       :true
+    },
     // all code here is sphagetti
     // bring your forks and tread softly
     GridText:function(row, col, hexsize) {
@@ -18,13 +25,21 @@ var debug = {
         if (row % 2 == 0) var x = col * hexW;
         else              var x = col * hexW + 1/2* hexW;
 
-        if (debug.mode === 'cords'   ) this.text = new createjs.Text(row + ", " + col, hexsize/2 + "px Arial", "black");
-        if (debug.mode === 'province') this.text = new createjs.Text(renderPrefs.board.map.tileMap[row][col].province, hexsize/2 + "px Arial", "black");
+        if (debug.mode.cords) this.text = new createjs.Text(
+            row + "," + col,
+            hexsize/2.5 + "px Courier", 
+            "black"
+        );
+        if (debug.mode.province) this.text = new createjs.Text(
+            renderPrefs.board.map.tileMap[row][col].province, 
+            hexsize/2.5 + "px Courier",
+            "black"
+        );
 
         var offset = render.board.get.offset();
 
-        this.text.x            = offset.x + x - hexsize/2;
-        this.text.y            = offset.y + y + hexsize/8;
+        this.text.x            = offset.x + x - hexsize/1.5;
+        this.text.y            = offset.y + y;
         this.text.textBaseline = "alphabetic";
 
         this.set = {};
@@ -41,14 +56,14 @@ var debug = {
             if (row % 2 == 0) var x = col * hexW;
             else              var x = col * hexW + 1/2* hexW;
 
-            self.text.x = offset.x + x - renderPrefs.board.hexsize/2;
-            self.text.y = offset.y + y + renderPrefs.board.hexsize/8;
+            self.text.x = offset.x + x - renderPrefs.board.hexsize/1.5;
+            self.text.y = offset.y + y;
 
-            self.text.font = renderPrefs.board.hexsize/2 + "px Arial";
+            self.text.font = renderPrefs.board.hexsize/2.5 + "px Courier";
         };
     },
     log:function(message) {
-        if (debug.mode) console.log(message);
+        if (debug.mode.log) console.log(message);
     }
 }
 
@@ -78,7 +93,7 @@ renderPrefs.board = {
     // hexsize:10,
     // offset:{x:10,y:10},
     scalable:true,
-    palette:['blue','brown','green'],
+    palette:generatePallete(12),
 };
 
 // ---------------------------------- renderObjects ----------------------------------- //
@@ -151,13 +166,30 @@ render.board.shapes.Hex = function (props) {
         else                   this.shape.x = this.col * this.hexW + 1/2* this.hexW;
 
         // calculate co-ordinates of edges
-        this.edges = [
+        var edgePoints = [
             { y: - hexsize/2, x: - this.hexW/2}, // upper left
             { y: - hexsize  , x: - 0          }, // top
             { y: - hexsize/2, x: + this.hexW/2}, // upper right
             { y: + hexsize/2, x: + this.hexW/2}, // lower right
             { y: + hexsize  , x: - 0          }, // bottom
             { y: + hexsize/2, x: - this.hexW/2}, // lower left
+        ];
+
+        // Edge indexes are for the following border cases:
+        // [0] -- up-left
+        // [1] -- up-right
+        // [2] -- left
+        // [3] -- right
+        // [4] -- down-left
+        // [5] -- down-right
+
+        this.edgeLines = [
+            {s:edgePoints[0], e:edgePoints[1]},
+            {s:edgePoints[1], e:edgePoints[2]},
+            {s:edgePoints[0], e:edgePoints[5]},
+            {s:edgePoints[2], e:edgePoints[3]},
+            {s:edgePoints[5], e:edgePoints[4]},
+            {s:edgePoints[3], e:edgePoints[4]} 
         ];
     }
 
@@ -183,7 +215,7 @@ render.board.shapes.Hex = function (props) {
             ).command,
         drawPolyStar: this.shape.graphics.drawPolyStar(
                 0,0,
-                props.hexsize, // +1 for no outline
+                props.hexsize+1, // +1 for no outline
                 6,0,30
             ).command
     }
@@ -192,16 +224,16 @@ render.board.shapes.Hex = function (props) {
 
     // Now, we define the commands that render the borders of the
     // province.
-    this.renderCommands.boderStrokeStyle = this.shape.graphics.setStrokeStyle(
-        2, 'round'
+    this.renderCommands.borderStrokeStyle = this.shape.graphics.setStrokeStyle(
+        Math.floor(props.hexsize/10), 'round'
     ).command
     this.renderCommands.borderStroke = this.shape.graphics.beginStroke(
         (props.renderprefs.strokeColor || "rgba(0,0,0,1)")
     ).command;
 
     // check tiles directly next to tile
-    this.renderCommands.borders = [];
-    var tileNo = 4;
+    this.renderCommands.borders = [0,0,0,0,0,0];
+    var tileNo = 0;
     for (var dr = -1; dr <= 1; dr++) {
         var range = [0,0];
         if (dr == 0) { 
@@ -211,28 +243,36 @@ render.board.shapes.Hex = function (props) {
         } else if (this.row % 2 == 0) { // even row
             range = [-1,0];
         }
-        
         for (var dc = range[0] ; dc <= range[1] ; dc++, tileNo++) {
-            if (dr == 0 && dc == 0) {
-                tileNo--;
-                continue;
-            }
-            // Check Out of Bounds
-            if (this.row + dr < 0 || this.row + dr > renderPrefs.board.map.dims.h-1) continue;
-            if (this.col + dc < 0 || this.col + dc > renderPrefs.board.map.dims.w-1) continue;
+            if (dr == 0 && dc == 0) { tileNo--; continue; }
 
-            if (renderPrefs.board.map.tileMap[this.row+dr][this.col+dc].province 
-                !== renderPrefs.board.map.tileMap[this.row][this.col].province) {
-                this.renderCommands.borders.push({
+            // Check if tile is on the outside of the board
+            var isOnEdgeOfBoard = 
+                (this.row + dr < 0 || this.row + dr > renderPrefs.board.map.dims.h-1
+              || this.col + dc < 0 || this.col + dc > renderPrefs.board.map.dims.w-1)
+            
+            // if we have a OUB situation, we don't want to referece the other tile
+            if (!isOnEdgeOfBoard) {
+            var isBorderingOtherProvince = 
+                (renderPrefs.board.map.tileMap[this.row+dr][this.col+dc].province 
+             !== renderPrefs.board.map.tileMap[this.row   ][this.col   ].province)
+
+            if (renderPrefs.board.map.tileMap[this.row   ][this.col   ].owner == 0) continue;
+            if (renderPrefs.board.map.tileMap[this.row+dr][this.col+dc].owner == 0) continue;
+            }
+
+
+            if (isOnEdgeOfBoard || isBorderingOtherProvince) {
+                this.renderCommands.borders[tileNo]={
                     moveTo:this.shape.graphics.moveTo(
-                        this.edges[1].x,
-                        this.edges[1].y
+                        this.edgeLines[tileNo].s.x,
+                        this.edgeLines[tileNo].s.y
                     ).command,
                     lineTo:this.shape.graphics.lineTo(
-                        this.edges[0].x,
-                        this.edges[0].y
+                        this.edgeLines[tileNo].e.x,
+                        this.edgeLines[tileNo].e.y
                     ).command
-                });
+                };
             }
         }
     }
@@ -249,8 +289,19 @@ render.board.shapes.Hex = function (props) {
     this.set.fillColor   = function (color)   {        self.renderCommands.beginFill.style = color; }
     this.get.fillColor   = function ()        { return self.renderCommands.beginFill.style;         }
     this.set.hexsize     = function (hexsize) { 
-        self.renderCommands.drawPolyStar.radius = hexsize;
         self.recalcSizeAndPos(hexsize)
+        self.renderCommands.drawPolyStar.radius = hexsize+1;
+        self.renderCommands.borderStrokeStyle.width = Math.floor(hexsize/10);
+
+        for (var border = 0; border < 6; border++) { 
+            if (self.renderCommands.borders[border] != 0) {
+                self.renderCommands.borders[border].moveTo.x = self.edgeLines[border].s.x;
+                self.renderCommands.borders[border].moveTo.y = self.edgeLines[border].s.y;
+                self.renderCommands.borders[border].lineTo.x = self.edgeLines[border].e.x;
+                self.renderCommands.borders[border].lineTo.y = self.edgeLines[border].e.y;
+            }
+        }
+
     }
 }
 render.board.init = function (map) {
@@ -325,8 +376,9 @@ render.board.resize = function (canvasW, canvasH, hexsize){
 
     for (var row = 0; row < renderPrefs.board.map.dims.h; row++) {
         for (var col = 0; col < renderPrefs.board.map.dims.w; col++) {
-                            renderObjects.map  [row][col].set.hexsize(renderPrefs.board.hexsize);
-            if (debug.mode) renderObjects.debug[row][col].recalc();                        //----------- DEBUG
+                renderObjects.map[row][col].set.hexsize(renderPrefs.board.hexsize);
+            if (debug.mode.cords || debug.mode.province) 
+                renderObjects.debug[row][col].recalc();                        //----------- DEBUG
         }       
     }
 
@@ -336,8 +388,12 @@ render.board.resize = function (canvasW, canvasH, hexsize){
 render.board.set = {};
 render.board.set.offset = function (offset) {
     if (offset == 'center') {
-        renderContainers.map.x = (stage.canvas.width  - (renderPrefs.board.map.dims.w - 0.5) * Math.sqrt(3)/2 * 2 * renderPrefs.board.hexsize) / 2;
-        renderContainers.map.y = (stage.canvas.height - (renderPrefs.board.map.dims.h - 0.5) *          (3)/4 * 2 * renderPrefs.board.hexsize) / 2;
+        renderContainers.map.x = (
+            stage.canvas.width 
+            - (renderPrefs.board.map.dims.w - 0.5) * Math.sqrt(3)/2 * 2 * renderPrefs.board.hexsize) / 2;
+        renderContainers.map.y = (
+            stage.canvas.height 
+            - (renderPrefs.board.map.dims.h - 0.5) *          (3)/4 * 2 * renderPrefs.board.hexsize) / 2;
         
     } else {
         renderContainers.map.x = offset.x
@@ -528,10 +584,14 @@ function init() {
         for (var row = 0; row < renderPrefs.board.map.dims.h; row++) {
             renderObjects.debug.push([]);
             for (var col = 0; col < renderPrefs.board.map.dims.w; col++) {
-                renderObjects.debug[row][col] = new debug.GridText(row, col, renderPrefs.board.hexsize);
-                renderContainers.debug.addChild(renderObjects.debug[row][col].text);
+                
+                if (debug.mode.cords || debug.mode.province) {
+                    renderObjects.debug[row][col] = new debug.GridText(row, col, renderPrefs.board.hexsize);
+                    renderContainers.debug.addChild(renderObjects.debug[row][col].text);
+                }
 
-                if (debug.mode === 'province') renderObjects.map[row][col].set.fillColor("rgba("
+                if (debug.mode.colorfull && renderPrefs.board.map.tileMap[row][col].owner)
+                renderObjects.map[row][col].set.fillColor("rgba("
                     +0
                     +","+Math.floor(255*(row/renderPrefs.board.map.dims.h))
                     +","+Math.floor(255*(col/renderPrefs.board.map.dims.w))
@@ -588,4 +648,44 @@ function colorsplotch (row,col) {
     }
 }
 
-function debugLog(message) { if (debug.mode) console.log(message); }
+function debugLog(message) { if (debug.mode.log) console.log(message); }
+
+function rainbow(numOfSteps, step) {
+    // This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating
+    // easily distinguishable vibrant markers in Google Maps and other apps.
+    // Adam Cole, 2011-Sept-14
+    // HSV to RBG adapted from:
+    //   http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
+    var r, g, b;
+    var h = step / numOfSteps;
+    var i = ~~(h * 6);
+    var f = h * 6 - i;
+    var q = 1 - f;
+    switch(i % 6){
+        case 0: r = 1; g = f; b = 0; break;
+        case 1: r = q; g = 1; b = 0; break;
+        case 2: r = 0; g = 1; b = f; break;
+        case 3: r = 0; g = q; b = 1; break;
+        case 4: r = f; g = 0; b = 1; break;
+        case 5: r = 1; g = 0; b = q; break;
+    }
+    var c = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) 
+                + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) 
+                + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
+    return (c);
+}
+function getRandomColor() {
+    var letters = '0123456789ABCDEF'.split('');
+    var color = '#';
+    for (var i = 0; i < 6; i++ ) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+function generatePallete(numColors) {
+    var palette = ['white'];
+    for (var color = 0; color < numColors-1; color++) {
+        palette.push(getRandomColor());
+    }
+    return palette;
+}
