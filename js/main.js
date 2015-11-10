@@ -2,16 +2,19 @@
 var stage;
 var map;
 
-var SCALE = 10;
+var SCALE = 15;
 
-var board_dimensions = {w:3*SCALE,h:2*SCALE};
+var BOARD_DIMENSIONS = {w:3*SCALE,h:2*SCALE};
+var SEED = undefined;
+var PLAYERS = 3;
 
 var debug = {
     mode:{
-        province  :true,  // don't use together
+        province  :false,  // don't use together
         cords     :false,  // don't use together
         colorfull :false,
-        log       :true
+        log       :true ,
+        seed      :true
     },
     // all code here is sphagetti
     // bring your forks and tread softly
@@ -91,7 +94,7 @@ renderPrefs.board = {
     // hexsize:10,
     // offset:{x:10,y:10},
     scalable:true,
-    palette:generatePallete(12), // random for now
+    palette:generatePallete(PLAYERS+1), // random for now
 };
 
 // ---------------------------------- renderObjects ----------------------------------- //
@@ -439,7 +442,6 @@ render.board.update.resize = function (canvasW, canvasH, hexsize){
 // tileMap - 2d array with each object being a object containing
 //      owner of the province
 //      province it belongs to
-// nProvinces - total number of provinces
 // provinces - object with subproperties pertaining to each province                      ------ IMPLEMENT THIS
 //      each province subobject will have properites
 //          tiles - a array of {row:row, col:col} for each tile that is in the porvince
@@ -449,7 +451,7 @@ function Map(dims, players, seed) {
     this.dims = dims;
     
     this.provinces = [];
-    this.nProvinces = 0;
+    provinceID = 0;
     
     this.tileMap = map;
 
@@ -459,7 +461,7 @@ function Map(dims, players, seed) {
     });
 
     // generate map using a seed, or random
-    seedRandom(seed || Math.random()); 
+    this.seed = seedRandom(seed || Math.random());
 
     // Randomly place seeds for provinces around
     // Yep. This may result in an infinite loop
@@ -505,7 +507,7 @@ function Map(dims, players, seed) {
             if (!areaconflict) {
                 this.tileMap[randomR][randomC] = {
                     owner:0,                            // we assign owners later on
-                    province: this.nProvinces++
+                    province: provinceID++
                 };
 
                 this.provinces.push({
@@ -582,7 +584,7 @@ function Map(dims, players, seed) {
                     if (oldAdjacentTile === -1 && random() < 0.25) {
                         // give land to that adjacent hex
                         this.tileMap[row + dr][col + dc] = {
-                            // owner: 0,
+                            owner: 0,
                             province: this.tileMap[row][col].province
                         };
                         
@@ -613,9 +615,6 @@ function Map(dims, players, seed) {
         if (emptycount == 0) break;
         debug.log(emptycount);
     }
-
-    // update number of provinces generated
-    this.nProvinces++; // So we get an actual number
 
     // find out what hexes belong to what provinces, and also which provinces border one another
     for (var row = 0; row < dims.h; row++) {
@@ -676,9 +675,38 @@ function Map(dims, players, seed) {
             self.tileMap[row][col].owner = owner;
         }
     }
-    this.set.provinceOwner(10,1);
     // assign owners to each province making sure there is a continuous landmass
+    var totalProvinces = this.provinces.length;
 
+    var playerCounter = 0; // needed to give each player correct ammount of land
+
+    var someProvince = getRandomInt(0,totalProvinces); // get a random start province
+
+    var seenProvinces = [someProvince]; // add that province to the list of seen provinces
+    while (seenProvinces.length < totalProvinces*2/3) { // we want to fill up 2/3 of the board
+        // get a list of all provinces bordering the currecnt province
+        var currentBorderProvinces = this.provinces[someProvince].bordering;
+
+        // for each of the provinces that border out currently province
+        for (var i = 0; i < currentBorderProvinces.length; i++) {
+            // we make a readbility varialbe of that current province
+            var someBorderProvince = currentBorderProvinces[i];
+
+            // check if we have already set it's value
+            var doPush = true;
+            for (var j = 0; j < seenProvinces.length; j++) {
+                if (seenProvinces[j] == someBorderProvince) doPush = false;
+            }
+            if (doPush  && random() < 0.25) { // if we have not, we push it to the seen array and update it's owner info
+                seenProvinces.push(someBorderProvince);
+                this.set.provinceOwner(someBorderProvince, (playerCounter++ % players) + 1);
+            }
+        }
+
+        // we then chose a province from seen-provinces to continue the process untill full
+        someProvince = seenProvinces[getRandomInt(0,seenProvinces.length-1)];
+    }
+    debug.log(seenProvinces.length / totalProvinces)
 }
 
 function init() {
@@ -688,7 +716,7 @@ function init() {
     stage.canvas.height = window.innerHeight;
     
     // generate map
-    map = new Map(board_dimensions,2);
+    map = new Map(BOARD_DIMENSIONS,PLAYERS,SEED);
 
     // Call the function to create the hex grid
     render.board.init(map);
@@ -718,10 +746,24 @@ function init() {
                     +0
                     +","+Math.floor(255*(row/map.dims.h))
                     +","+Math.floor(255*(col/map.dims.w))
-                    +","+(map.tileMap[row][col].province/map.nProvinces)
+                    +","+(map.tileMap[row][col].province/map.provinces.length)
                 +")");
             }       
         }
+        if (debug.mode.seed) {
+            renderObjects.seed = new createjs.Text(
+                "Seed: "+map.seed, 
+                "24px Courier",
+                "black"
+            );
+
+            renderObjects.seed.x            = 10;
+            renderObjects.seed.y            = 24;
+            renderObjects.seed.textBaseline = "alphabetic";
+
+            stage.addChild(renderObjects.seed);
+        }
+
         stage.update();
     }
 }
@@ -745,10 +787,13 @@ window.onload = init;
 
 // UTILS
 var seed = 1;
-function seedRandom(s) { seed = s; }
+function seedRandom(s) { seed = s; return seed; }
 function random() {
     var x = Math.sin(seed++) * 10000;
     return x - Math.floor(x);
+}
+function getRandomInt(min, max) {
+    return Math.floor(random() * (max - min)) + min;
 }
 
 function colorsplotch (row,col) {
@@ -826,4 +871,15 @@ function uniq(a) {
          }
     }
     return out;
+}
+
+function getRandomSubarray(arr, size) {
+    var shuffled = arr.slice(0), i = arr.length, temp, index;
+    while (i--) {
+        index = Math.floor((i + 1) * Math.random());
+        temp = shuffled[index];
+        shuffled[index] = shuffled[i];
+        shuffled[i] = temp;
+    }
+    return shuffled.slice(0, size);
 }
