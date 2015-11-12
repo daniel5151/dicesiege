@@ -461,7 +461,8 @@ function Map(dims, players, seed) {
     });
 
     // generate map using a seed, or random
-    this.seed = seedRandom(seed || Math.random());
+    this.seed = (seed!="")?seed:Math.random();
+    seedRandom( (parseFloat(this.seed) == this.seed)?parseFloat(this.seed):strToLexNum(this.seed) );
 
     // Randomly place seeds for provinces around
     // Yep. This may result in an infinite loop
@@ -469,6 +470,7 @@ function Map(dims, players, seed) {
     var BUFFER = 2;
     var tiles = [];
 
+    debug.log("Begining initial map seeding");
     for (var i = 0; i < (dims.h*dims.w) / ((players+1)*(BUFFER*BUFFER + BUFFER)); i++) {
         while (true){
             // pick a random point on the board
@@ -531,9 +533,10 @@ function Map(dims, players, seed) {
     // grow seeds by iterating
         // var MAX_ITER = 6;
         // while (--MAX_ITER){
+    debug.log("Begining Growth by Iteration");
     while (true) {
         // clone map
-        var oldmap = []
+        var oldmap = [];
         for (var row = 0; row < dims.h; row++) {
             oldmap.push([]);
             for (var col = 0; col < dims.w; col++) {
@@ -615,8 +618,8 @@ function Map(dims, players, seed) {
         if (emptycount == 0) break;
         debug.log(emptycount);
     }
-
     // find out what hexes belong to what provinces, and also which provinces border one another
+    debug.log("Enumerating Provinces");
     for (var row = 0; row < dims.h; row++) {
         for (var col = 0; col < dims.w; col++) {
             // for readability
@@ -675,7 +678,9 @@ function Map(dims, players, seed) {
             self.tileMap[row][col].owner = owner;
         }
     }
+
     // assign owners to each province making sure there is a continuous landmass
+    debug.log("Assigning province owners");
     var totalProvinces = this.provinces.length;
 
     var playerCounter = 0; // needed to give each player correct ammount of land
@@ -705,8 +710,10 @@ function Map(dims, players, seed) {
 
         // we then chose a province from seen-provinces to continue the process untill full
         someProvince = seenProvinces[getRandomInt(0,seenProvinces.length-1)];
+
+        // log % completion
+        debug.log(  Math.floor((seenProvinces.length / totalProvinces) / (2/3) * 100)  );
     }
-    debug.log(seenProvinces.length / totalProvinces)
 }
 
 function init() {
@@ -714,6 +721,8 @@ function init() {
     stage = new createjs.Stage("c");
     stage.canvas.width = window.innerWidth;
     stage.canvas.height = window.innerHeight;
+
+    var SEED = prompt("Enter Seed Value (nothing for random): ");
     
     // generate map
     map = new Map(BOARD_DIMENSIONS,PLAYERS,SEED);
@@ -795,7 +804,6 @@ function random() {
 function getRandomInt(min, max) {
     return Math.floor(random() * (max - min)) + min;
 }
-
 function colorsplotch (row,col) {
     for (var dr = -1; dr <= 1; dr++) {
         var range = [0,0];
@@ -814,33 +822,6 @@ function colorsplotch (row,col) {
             board.mapObjects[row+dr][col+dc].set.fillColor("black");
         }
     }
-}
-
-function debugLog(message) { if (debug.mode.log) console.log(message); }
-
-function rainbow(numOfSteps, step) {
-    // This function generates vibrant, "evenly spaced" colours (i.e. no clustering). This is ideal for creating
-    // easily distinguishable vibrant markers in Google Maps and other apps.
-    // Adam Cole, 2011-Sept-14
-    // HSV to RBG adapted from:
-    //   http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
-    var r, g, b;
-    var h = step / numOfSteps;
-    var i = ~~(h * 6);
-    var f = h * 6 - i;
-    var q = 1 - f;
-    switch(i % 6){
-        case 0: r = 1; g = f; b = 0; break;
-        case 1: r = q; g = 1; b = 0; break;
-        case 2: r = 0; g = 1; b = f; break;
-        case 3: r = 0; g = q; b = 1; break;
-        case 4: r = f; g = 0; b = 1; break;
-        case 5: r = 1; g = 0; b = q; break;
-    }
-    var c = "#" + ("00" + (~ ~(r * 255)).toString(16)).slice(-2) 
-                + ("00" + (~ ~(g * 255)).toString(16)).slice(-2) 
-                + ("00" + (~ ~(b * 255)).toString(16)).slice(-2);
-    return (c);
 }
 function getRandomColor() {
     var letters = '0123456789ABCDEF'.split('');
@@ -873,13 +854,10 @@ function uniq(a) {
     return out;
 }
 
-function getRandomSubarray(arr, size) {
-    var shuffled = arr.slice(0), i = arr.length, temp, index;
-    while (i--) {
-        index = Math.floor((i + 1) * Math.random());
-        temp = shuffled[index];
-        shuffled[index] = shuffled[i];
-        shuffled[i] = temp;
+function strToLexNum(str) {
+    var sum = 0;
+    for (var i = 0; i < str.length; i++) {
+      sum += str.charCodeAt(i);
     }
-    return shuffled.slice(0, size);
+    return sum;
 }

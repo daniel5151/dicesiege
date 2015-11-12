@@ -4,6 +4,274 @@
 		"selected_items":
 		[
 			[
+				"render",
+				"renderObjects"
+			],
+			[
+				"seen",
+				"seenProvinces"
+			],
+			[
+				"some",
+				"someBorderProvince"
+			],
+			[
+				"province",
+				"provinceOwner"
+			],
+			[
+				"cure",
+				"currentBorderProvinces"
+			],
+			[
+				"borderPRo",
+				"borderProvince"
+			],
+			[
+				"border",
+				"borderProvince"
+			],
+			[
+				"tt",
+				"totalProvinces"
+			],
+			[
+				"empty",
+				"emptyProvinces"
+			],
+			[
+				"get",
+				"getRandomInt"
+			],
+			[
+				"new",
+				"newBorders"
+			],
+			[
+				"se",
+				"seenProvinces"
+			],
+			[
+				"borde",
+				"borderingProvinces"
+			],
+			[
+				"bor",
+				"borderingProvince"
+			],
+			[
+				"cur",
+				"currProvince"
+			],
+			[
+				"pr",
+				"province"
+			],
+			[
+				"ple",
+				"players"
+			],
+			[
+				"emp",
+				"emptyProvinces"
+			],
+			[
+				"prov",
+				"provinceOwner"
+			],
+			[
+				"len",
+				"length"
+			],
+			[
+				"getRa",
+				"getRandomSubarray"
+			],
+			[
+				"provi",
+				"provinces"
+			],
+			[
+				"getRam",
+				"getRandomInt"
+			],
+			[
+				"prove",
+				"provinceOwner"
+			],
+			[
+				"tile",
+				"tileMap"
+			],
+			[
+				"provinceColor",
+				"provinceColorByColor"
+			],
+			[
+				"n",
+				"nProvinces"
+			],
+			[
+				"pro",
+				"province"
+			],
+			[
+				"ad",
+				"adjacentTile"
+			],
+			[
+				"curr",
+				"currTile"
+			],
+			[
+				"old",
+				"oldAdjacentTile"
+			],
+			[
+				"alread",
+				"alreadyBorder"
+			],
+			[
+				"alre",
+				"alreadyBorder"
+			],
+			[
+				"forEa",
+				"forEachSurroundingTile"
+			],
+			[
+				"loop",
+				"loopThrough"
+			],
+			[
+				"re",
+				"return"
+			],
+			[
+				"co",
+				"continue"
+			],
+			[
+				"set",
+				"setStrokeStyle"
+			],
+			[
+				"tie",
+				"tile"
+			],
+			[
+				"ed",
+				"edgePoints"
+			],
+			[
+				"he",
+				"hexsize"
+			],
+			[
+				"h",
+				"hexsize"
+			],
+			[
+				"e",
+				"edges"
+			],
+			[
+				"beign",
+				"beginStroke"
+			],
+			[
+				"rend",
+				"renderCommands"
+			],
+			[
+				"map",
+				"tileMap"
+			],
+			[
+				"rnder",
+				"renderprefs"
+			],
+			[
+				"ren",
+				"render"
+			],
+			[
+				"rende",
+				"renderObjects"
+			],
+			[
+				"red",
+				"render"
+			],
+			[
+				"nu",
+				"numProvinces"
+			],
+			[
+				"fil",
+				"fillColor"
+			],
+			[
+				"ti",
+				"tiles"
+			],
+			[
+				"ma",
+				"mapObjects"
+			],
+			[
+				"rando",
+				"random"
+			],
+			[
+				"random",
+				"seedRandom"
+			],
+			[
+				"ra",
+				"randomY"
+			],
+			[
+				"are",
+				"areaconflict"
+			],
+			[
+				"ar",
+				"areaconflict"
+			],
+			[
+				"a",
+				"areaconflict"
+			],
+			[
+				"gener",
+				"generateMap"
+			],
+			[
+				"hex",
+				"hexColor"
+			],
+			[
+				"ge",
+				"generateColorMap"
+			],
+			[
+				"colro",
+				"colormap"
+			],
+			[
+				"color",
+				"colormap"
+			],
+			[
+				"o",
+				"offset"
+			],
+			[
+				"rener",
+				"renderprefs"
+			],
+			[
 				"deb",
 				"debug"
 			],
@@ -16,19 +284,7 @@
 				"strokeColor"
 			],
 			[
-				"render",
-				"renderprefs"
-			],
-			[
-				"hex",
-				"hexsize"
-			],
-			[
 				"hexsi",
-				"hexsize"
-			],
-			[
-				"he",
 				"hexsize"
 			],
 			[
@@ -37,18 +293,6 @@
 			],
 			[
 				"remove",
-				"removeAllChildren"
-			],
-			[
-				"new",
-				"newsize"
-			],
-			[
-				"get",
-				"getCenterOffset"
-			],
-			[
-				"re",
 				"removeAllChildren"
 			],
 			[
@@ -66,10 +310,6 @@
 			[
 				"debug",
 				"debugObjects"
-			],
-			[
-				"map",
-				"mapContainer"
 			],
 			[
 				"c",
@@ -112,16 +352,8 @@
 				"gcfact"
 			],
 			[
-				"n",
-				"n_players"
-			],
-			[
 				"star",
 				"start-1"
-			],
-			[
-				"ma",
-				"main	main()"
 			],
 			[
 				"num",
@@ -130,10 +362,6 @@
 			[
 				"mar",
 				"margin"
-			],
-			[
-				"bor",
-				"border-style"
 			],
 			[
 				"back",
@@ -150,10 +378,6 @@
 			[
 				"pad",
 				"padding"
-			],
-			[
-				"border",
-				"border-radius"
 			],
 			[
 				"font-s",
@@ -180,10 +404,6 @@
 				"for	For Loop"
 			],
 			[
-				"pr",
-				"printf	printf …"
-			],
-			[
 				"ideal",
 				"ideal_box"
 			],
@@ -194,18 +414,6 @@
 			[
 				"pre",
 				"prevNum"
-			],
-			[
-				"a",
-				"array_length"
-			],
-			[
-				"h",
-				"holdr"
-			],
-			[
-				"ar",
-				"array"
 			],
 			[
 				"mo",
@@ -226,10 +434,6 @@
 			[
 				"icn",
 				"include"
-			],
-			[
-				"pro",
-				"program"
 			],
 			[
 				"r",
@@ -263,14 +467,6 @@
 	},
 	"buffers":
 	[
-		{
-			"file": "js/main.js",
-			"settings":
-			{
-				"buffer_size": 7822,
-				"line_ending": "Unix"
-			}
-		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -311,8 +507,8 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 96.0,
-		"last_filter": "markdow",
+		"height": 75.0,
+		"last_filter": "",
 		"selected_items":
 		[
 			[
@@ -332,7 +528,7 @@
 				"Snippet: fprintf …"
 			]
 		],
-		"width": 575.0
+		"width": 467.0
 	},
 	"console":
 	{
@@ -360,6 +556,8 @@
 	"file_history":
 	[
 		"/home/danielprilik/GitHub/dicesiege/js/main.js",
+		"/home/danielprilik/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
+		"/home/danielprilik/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
 		"/home/danielprilik/GitHub/dicesiege/dicesiege.sublime-workspace",
 		"/home/danielprilik/GitHub/dicesiege/dicesiege.sublime-project",
 		"/home/danielprilik/GitHub/dicesiege/index.html",
@@ -426,7 +624,6 @@
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_01/tester.c",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/day.c",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/wrapper.c",
-		"/home/danielprilik/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/day.h",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/out.txt",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Assignments/A2_02/in.txt",
@@ -485,8 +682,7 @@
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/11.c",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/10.c",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/9.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/7.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/8_incomplete.c"
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/7.c"
 	],
 	"find":
 	{
@@ -504,6 +700,80 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"PLAYERS",
+			"seedRandom",
+			"debug",
+			"nPRovinces",
+			"render.board.res",
+			"tiles[i].col",
+			"tiles[i].row",
+			"this.provinces",
+			"renderPrefs.board.map",
+			"debug.mode",
+			"hexsize+1",
+			"render.board.resize",
+			"renderObjects.debugObjects",
+			"renderObjects.mapObjects",
+			"renderObjects.debugContainer",
+			"renderObjects.mapContainer",
+			"mapContainer",
+			"new He",
+			"this.map",
+			"resize",
+			"renderprefs",
+			"this.dims",
+			"this",
+			"this.dims",
+			"board",
+			"this",
+			"debug",
+			"province",
+			"this.map",
+			"board.map",
+			"unshift",
+			"prefs",
+			"offset",
+			"nProvinces",
+			"board",
+			"                   ",
+			"colormap",
+			"numProvinces",
+			"recolor",
+			"this",
+			"offset",
+			"centerOffset",
+			"offset",
+			"GridText",
+			"colormap",
+			"GridText",
+			"dims[1]",
+			"dims[0]",
+			"[0]",
+			"generateMap",
+			"y",
+			"x",
+			"dy",
+			"dx",
+			"y",
+			"tiles[i].x",
+			".x",
+			"dy",
+			"dx",
+			"randomY",
+			"randomX",
+			"Col",
+			"col",
+			"Col",
+			"col",
+			"Col",
+			"col",
+			"row",
+			"randomY",
+			"randomX",
+			"col2",
+			"col",
+			"row",
+			"dx",
 			"Debug",
 			"dimensions",
 			"hexdims",
@@ -557,44 +827,7 @@
 			";\n",
 			"id",
 			"CSS",
-			"#",
-			"totalmoney",
-			"return",
-			"ir",
-			"br",
-			"i",
-			"j",
-			"i",
-			"j",
-			"i",
-			"y",
-			"x",
-			"ideal_row",
-			"y",
-			"x",
-			"c",
-			"a",
-			"short",
-			", ",
-			"1",
-			"2",
-			"3",
-			"xx",
-			"HH:MM",
-			"\"",
-			"A",
-			"num_to_square",
-			"n",
-			"m",
-			"n",
-			"m",
-			"Grade",
-			"grade",
-			"d",
-			"speed",
-			"3",
-			"wrap",
-			"word wra"
+			"#"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -602,6 +835,21 @@
 		"regex": false,
 		"replace_history":
 		[
+			"col",
+			"row",
+			"map",
+			"renderObjects.debug",
+			"renderObjects.map",
+			"renderContainers.debug",
+			"renderContainers.map",
+			"nProvinces",
+			"dc",
+			"dr",
+			"randomC",
+			"randomR",
+			"col",
+			"row",
+			"col2",
 			"dims",
 			"hexdims",
 			"map.size.height",
@@ -632,45 +880,14 @@
 		"reverse": false,
 		"show_context": true,
 		"use_buffer2": true,
-		"whole_word": true,
+		"whole_word": false,
 		"wrap": true
 	},
 	"groups":
 	[
 		{
-			"selected": 0,
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "js/main.js",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 7822,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								122,
-								135
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				}
 			]
 		}
 	],
