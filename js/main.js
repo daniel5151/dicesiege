@@ -2,7 +2,7 @@
 var stage;
 var map;
 
-var SCALE = 15;
+var SCALE = 20;
 
 var BOARD_DIMENSIONS = {w:3*SCALE,h:2*SCALE};
 var SEED = undefined;
@@ -206,13 +206,11 @@ render.board.shapes.Hex = function (props) {
     this.renderCommands = {
         // Render the shape. This is position invariant
         beginFill: this.shape.graphics.beginFill(
-                (props.renderprefs.fillColor
-                    || 
-                    "rgb("
-                        +150
-                        +","+Math.floor(255*(this.row/map.dims.h))
-                        +","+Math.floor(255*(this.col/map.dims.w))
-                    +")")
+                ("rgb("
+                    +150
+                    +","+Math.floor(255*(this.row/map.dims.h))
+                    +","+Math.floor(255*(this.col/map.dims.w))
+                +")")
             ).command,
         drawPolyStar: this.shape.graphics.drawPolyStar(
                 0,0,
@@ -229,8 +227,15 @@ render.board.shapes.Hex = function (props) {
         Math.floor(props.hexsize/10), 'round'
     ).command
     this.renderCommands.borderStroke = this.shape.graphics.beginStroke(
-        (props.renderprefs.strokeColor || "rgba(0,0,0,1)")
+        ("rgba(0,0,0,1)")
     ).command;
+
+    // add custom colors preferences form initialization
+    if (props.colors) {
+        for (var prop in props.colors) {
+            this.renderCommands[prop].style = props.colors[prop];
+        }
+    }
 
     // check tiles directly next to tile
     this.renderCommands.borders = [0,0,0,0,0,0];
@@ -304,6 +309,13 @@ render.board.shapes.Hex = function (props) {
 
     this.get.strokeColor = function ()        { return self.renderCommands.beginStroke.style; }
     this.get.fillColor   = function ()        { return self.renderCommands.beginFill.style;   }
+
+    // get clicks
+    this.shape.addEventListener("click", function(event) {
+        // alert(map.tileMap[self.row][self.col].owner);
+        render.board.set.provinceColorByColor(map.tileMap[self.row][self.col].province, getRandomColor());
+        stage.update();
+    })
 }
 
 render.board.init = function (map) {
@@ -337,7 +349,7 @@ render.board.init = function (map) {
                 row:row,
                 col:col,
                 hexsize:renderPrefs.board.hexsize,
-                renderprefs:{},
+                // colors:{borderStroke:"green"},
                 province: map.tileMap[row][col].province
             });
             renderContainers.map.addChild(renderObjects.map[row][col].shape);
