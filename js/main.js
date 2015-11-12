@@ -2,7 +2,7 @@
 var stage;
 var map;
 
-var SCALE = 20;
+var SCALE = 15;
 
 var BOARD_DIMENSIONS = {w:3*SCALE,h:2*SCALE};
 var SEED = undefined;
