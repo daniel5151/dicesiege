@@ -328,15 +328,6 @@ render.board.init = function (map) {
     // if there is no given offset, fallback to center positioning
     if (!renderPrefs.board.offset) render.board.set.offset('center');
 
-    // Generate a colormap from a given map and pallete
-    var colormap = [];
-    for (var row = 0; row < map.dims.h; row++) {
-        colormap.push([]);
-        for (var col = 0; col < map.dims.w; col++) {
-            colormap[row][col] = renderPrefs.board.palette[map.tileMap[row][col].owner];
-        }
-    }
-
     // populate the renderContainers.map container with hexes, and keep track of the hexes in mapObjects
     renderObjects.map = [];
     for (var row = 0; row < map.dims.h; row++) {
@@ -346,13 +337,15 @@ render.board.init = function (map) {
                 row:row,
                 col:col,
                 hexsize:renderPrefs.board.hexsize,
-                renderprefs:{
-                    fillColor: colormap[row][col]
-                },
+                renderprefs:{},
                 province: map.tileMap[row][col].province
             });
             renderContainers.map.addChild(renderObjects.map[row][col].shape);
         }       
+    }
+
+    for (var i = 0; i < map.provinces.length; i++) {
+        render.board.set.provinceColorByOwner(i);
     }
 
     stage.update();
@@ -396,7 +389,7 @@ render.board.set.provinceColorByColor = function (province, color) {
 }
 // should be called after province changes hands
 render.board.set.provinceColorByOwner = function (province) {
-    render.board.set.provinceColorByColor(province, renderPrefs.board.pallette[map.provinces[province].owner])
+    render.board.set.provinceColorByColor(province, renderPrefs.board.palette[map.provinces[province].owner])
 }
 
 render.board.get = {};
@@ -442,7 +435,7 @@ render.board.update.resize = function (canvasW, canvasH, hexsize){
 // tileMap - 2d array with each object being a object containing
 //      owner of the province
 //      province it belongs to
-// provinces - object with subproperties pertaining to each province                      ------ IMPLEMENT THIS
+// provinces - object with subproperties pertaining to each province                      
 //      each province subobject will have properites
 //          tiles - a array of {row:row, col:col} for each tile that is in the porvince
 //          bordering - a array of provinces that border this province
@@ -518,7 +511,7 @@ function Map(dims, players, seed) {
                         col:randomC
                     }],
                     bordering:[],
-                    owner:0
+                    owner:0        // updated later 
                 });
 
                 tiles.push({
@@ -704,7 +697,8 @@ function Map(dims, players, seed) {
             }
             if (doPush  && random() < 0.25) { // if we have not, we push it to the seen array and update it's owner info
                 seenProvinces.push(someBorderProvince);
-                this.set.provinceOwner(someBorderProvince, (playerCounter++ % players) + 1);
+                this.provinces[someBorderProvince].owner = (playerCounter++ % players) + 1;
+                this.set.provinceOwner(someBorderProvince, this.provinces[someBorderProvince].owner);
             }
         }
 
