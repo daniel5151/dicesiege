@@ -4,7 +4,6 @@ var map;
 
 var SCALE = 15;
 
-var BOARD_DIMENSIONS = {w:3*SCALE,h:2*SCALE};
 var SEED = undefined;
 var PLAYERS = 3;
 
@@ -285,6 +284,8 @@ render.board.shapes.Hex = function (props) {
 
     this.shape.graphics
         .endStroke();
+
+    this.shape.snapToPixel = true;
     
     // make helper function to change props
     this.set = {};
@@ -315,7 +316,7 @@ render.board.shapes.Hex = function (props) {
         // alert(map.tileMap[self.row][self.col].owner);
         render.board.set.provinceColorByColor(map.tileMap[self.row][self.col].province, getRandomColor());
         stage.update();
-    })
+    });
 }
 
 render.board.init = function (map) {
@@ -727,9 +728,14 @@ function init() {
     stage = new createjs.Stage("c");
     stage.canvas.width = window.innerWidth;
     stage.canvas.height = window.innerHeight;
+    stage.snapToPixelEnabled = true;
 
     var SEED = prompt("Enter Seed Value (nothing for random): ");
+    var SCALE = prompt("Enter a scale for the map (default 15) (min 5, max as much as your device can handle): ");
+    if (SCALE < 5 || SCALE =="" || !parseInt(SCALE)) SCALE = 15;
     
+    var BOARD_DIMENSIONS = {w:3*SCALE,h:2*SCALE};
+
     // generate map
     map = new Map(BOARD_DIMENSIONS,PLAYERS,SEED);
 
