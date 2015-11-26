@@ -583,6 +583,7 @@
 	],
 	"file_history":
 	[
+		"/home/danielprilik/GitHub/dicesiege/lib/raphael.min.js",
 		"/home/danielprilik/GitHub/dicesiege/js/main.js",
 		"/home/danielprilik/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
 		"/home/danielprilik/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
@@ -709,8 +710,7 @@
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/12.c",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/11.c",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/10.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/9.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/7.c"
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/9.c"
 	],
 	"find":
 	{
@@ -930,8 +930,8 @@
 						"selection":
 						[
 							[
-								30559,
-								30559
+								241,
+								241
 							]
 						],
 						"settings":
@@ -941,7 +941,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 9288.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
