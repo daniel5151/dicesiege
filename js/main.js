@@ -14,6 +14,41 @@ var debug = {
     }
 }
 
+function getHexesSurrounding(x, y) {
+    var surroundingHexes = [0,0,0,0,0,0];
+
+    var tilePos = 0;
+    // For the row above, at, and beneath the current tile
+    for (var dy = -1; dy <= 1; dy++) {
+        
+        // Which tiles need to be checked in a row depends on
+        // if the row is even or oddly numbered, or if the row
+        // being checked is the same row that the tile rests on
+
+        var dx_range = [];
+        if      (dy == 0)    dx_range = [-1, 1];  // Same Row as tile
+        else if (y % 2 == 1) dx_range = [ 0, 1];  // Row is an Odd Row
+        else if (y % 2 == 0) dx_range = [-1, 0];  // Row is an Even row
+        
+        // Fianlly, we can iterate through each of the tiles surrounding the tile
+        for (var dx = dx_range[0] ; dx <= dx_range[1] ; dx++, tilePos++) {
+            // Check if we are at the current tile
+            if (dy == 0 && dx == 0) { tilePos--; continue; } 
+
+            // Get that nice circular order
+            if (tilePos == 0 || tilePos == 1) surroundingHexes[tilePos] = [y + dy, x + dx];
+            if (tilePos == 3)                 surroundingHexes[2]       = [y + dy, x + dx];
+            if (tilePos == 5)                 surroundingHexes[3]       = [y + dy, x + dx];
+            if (tilePos == 4)                 surroundingHexes[4]       = [y + dy, x + dx];
+            if (tilePos == 2)                 surroundingHexes[5]       = [y + dy, x + dx];
+
+        }
+    }
+
+    return surroundingHexes;
+}
+
+
 
 
 
@@ -34,20 +69,19 @@ function Map(dims, players, seed) {
 
     console.time("Total Map Generation Time");
 
-    var dims = dims;
     var provinces = [];
     var provinceID = 0;
-    
-    var tileMap = map;
+
 
     // generate map using a seed, or random
     var seed = (seed!="")?seed:Math.random();
     seedRandom( (parseFloat(seed) == seed)?parseFloat(seed):strToLexNum(seed) );
 
     // Generate array of -1
-    tileMap = Array.apply(null, Array(dims.h)).map(function(){
+    var tileMap = Array.apply(null, Array(dims.h)).map(function(){
         return Array.apply(null, Array(dims.w)).map(Number.prototype.valueOf, -1)
     });
+    tileMap.dims = dims;
 
     // Randomly place seeds for provinces around
     // Yep. This may result in an infinite loop
@@ -56,11 +90,11 @@ function Map(dims, players, seed) {
     var tiles = [];
 
     debug.time("Begining initial map seeding");
-    for (var i = 0; i < (dims.h*dims.w) / ((players+1)*(BUFFER*BUFFER + BUFFER)); i++) {
+    for (var i = 0; i < (tileMap.dims.h*tileMap.dims.w) / ((players+1)*(BUFFER*BUFFER + BUFFER)); i++) {
         while (true){
             // pick a random point on the board
-            var randomR = Math.round(random()*(dims.h-1));
-            var randomC = Math.round(random()*(dims.w-1));
+            var randomR = Math.round(random()*(tileMap.dims.h-1));
+            var randomC = Math.round(random()*(tileMap.dims.w-1));
 
             // check if we have visited this piece before, and if so, just continue
             var docontinue = false;
@@ -79,8 +113,8 @@ function Map(dims, players, seed) {
             for (var dr = -BUFFER; dr <= BUFFER; dr++) {
                 for (var dc = -BUFFER; dc <= BUFFER; dc++) {
                     // check boundary conditions
-                    if (randomR + dr < 0 || randomR + dr > dims.h-1) continue;
-                    if (randomC + dc < 0 || randomC + dc > dims.w-1) continue;
+                    if (randomR + dr < 0 || randomR + dr > tileMap.dims.h-1) continue;
+                    if (randomC + dc < 0 || randomC + dc > tileMap.dims.w-1) continue;
 
                     // if there is a tile that is non--1 around a piece, then there is an area conflict.
                     if (tileMap[randomR + dr][randomC + dc] !== -1) {
@@ -122,9 +156,9 @@ function Map(dims, players, seed) {
     while (true) {
         // clone map
         var oldmap = [];
-        for (var row = 0; row < dims.h; row++) {
+        for (var row = 0; row < tileMap.dims.h; row++) {
             oldmap.push([]);
-            for (var col = 0; col < dims.w; col++) {
+            for (var col = 0; col < tileMap.dims.w; col++) {
                 oldmap[row][col] = tileMap[row][col];
             }
         }
@@ -160,8 +194,8 @@ function Map(dims, players, seed) {
                     if (dr == 0 && dc == 0) continue;
 
                     // Check Out of Bounds
-                    if (row + dr < 0 || row + dr > dims.h-1) continue;
-                    if (col + dc < 0 || col + dc > dims.w-1) continue;
+                    if (row + dr < 0 || row + dr > tileMap.dims.h-1) continue;
+                    if (col + dc < 0 || col + dc > tileMap.dims.w-1) continue;
 
                     // for readability 
                     var oldAdjacentTile =  oldmap[row + dr][col + dc];
@@ -194,9 +228,9 @@ function Map(dims, players, seed) {
         }
 
         // check if there are any more provinces left to fill, and if not, break.
-        var emptycount = dims.h*dims.w;
-        for (var row = 0; row < dims.h; row++) {
-            for (var col = 0; col < dims.w; col++) {
+        var emptycount = tileMap.dims.h*tileMap.dims.w;
+        for (var row = 0; row < tileMap.dims.h; row++) {
+            for (var col = 0; col < tileMap.dims.w; col++) {
                 if (tileMap[row][col] !== -1) emptycount-=1;
             }
         }
@@ -207,48 +241,42 @@ function Map(dims, players, seed) {
 
     // find out what hexes belong to what provinces, and also which provinces border one another
     debug.time("Enumerating Provinces");
-    for (var row = 0; row < dims.h; row++) {
-        for (var col = 0; col < dims.w; col++) {
+
+    for (var y = 0; y < tileMap.dims.h; y++) {
+        for (var x = 0; x < tileMap.dims.w; x++) {
             // for readability
-            var currTile = tileMap[row][col];
+            var curTile = tileMap[y][x];
 
-            provinces[currTile.province].tiles.push([col,row])
+            provinces[curTile.province].tiles.push([x,y])
 
-            // check tiles directly next to tile
-            for (var dr = -1; dr <= 1; dr++) {
-                var range = [0,0];
-                if (dr == 0) { 
-                    range = [-1,1];
-                } else if (row % 2 == 1) { // odd row
-                    range = [0,1];
-                } else if (row % 2 == 0) { // even row
-                    range = [-1,0];
-                }
-                
-                for (var dc = range[0] ; dc <= range[1] ; dc++) {
-                    // don't do unneccesary self comparison
-                    if (dr == 0 && dc == 0) continue;
+            var surroundingHexes = getHexesSurrounding(x,y);
+            for (var side = 0; side < 6; side++) {
+                if (!surroundingHexes[side]) continue;
+                var y2 = surroundingHexes[side][0];
+                var x2 = surroundingHexes[side][1];
 
-                    // Check Out of Bounds
-                    if (row + dr < 0 || row + dr > dims.h-1) continue;
-                    if (col + dc < 0 || col + dc > dims.w-1) continue;
+                // Check if the tile being referenced is on the outside of the board
+                var isOnEdgeOfBoard = (
+                    y2 < 0 || y2 > tileMap.dims.h-1 ||
+                    x2 < 0 || x2 > tileMap.dims.w-1
+                );
+                if (!isOnEdgeOfBoard) {
+                    // for readability
+                    var adjTile = tileMap[y2][x2];
 
-                    // for readability 
-                    var adjacentTile = tileMap[row + dr][col + dc];
+                    if (adjTile.province !== curTile.province) {
+                        provinces[curTile.province].bordering.push(adjTile.province);
+                        provinces[adjTile.province].bordering.push(curTile.province);
 
-                    if (adjacentTile.province !== currTile.province) {
-                        provinces[currTile.province].bordering.push(adjacentTile.province);
-                        provinces[adjacentTile.province].bordering.push(currTile.province);
-
-                        provinces[currTile.province].bordering = uniq(
-                            provinces[currTile.province].bordering
+                        provinces[curTile.province].bordering = uniq(
+                            provinces[curTile.province].bordering
                         );
-                        provinces[adjacentTile.province].bordering = uniq(
-                            provinces[adjacentTile.province].bordering
+                        provinces[adjTile.province].bordering = uniq(
+                            provinces[adjTile.province].bordering
                         );
                     }
                 }
-            }
+            };
         }
     }
     debug.timeEnd("Enumerating Provinces");
@@ -309,14 +337,13 @@ function Map(dims, players, seed) {
     // this object the map properties
 
     // given properties (for easy reference)
-    this.dims = dims;
+
     this.seed = seed;
 
     // generated map
     this.provinces = provinces;
     this.tileMap = tileMap;
 }
-
 
 
 
@@ -445,19 +472,20 @@ var Render = new function () {
                 ));
             };
 
-            var path = two.makePath(anchoredPoints, false);
+            this.path = two.makePath(anchoredPoints, false);
 
-            path.linewidth = linewidth;
-            path.stroke = stroke;
-            path.fill = fill;
+            this.path.linewidth = linewidth;
+            this.path.stroke = stroke;
+            this.path.fill = fill;
 
             two.update();
 
-            path.onclick = function (f) {
-                this._renderer.elem.addEventListener('click', f);
+            var self = this;
+            this.onclick = function (f) {
+                self.path._renderer.elem.addEventListener('click', function (e) {
+                    f(e,self);
+                });
             }
-
-            return path;
         }
     };
 
@@ -466,17 +494,13 @@ var Render = new function () {
         Province:function (props) {
             var provinceID = props.id;
 
-
-
-
-
             // Some useful values
             var HexW = hexradius * Math.cos(Math.PI / 6);
             var HexH = hexradius * Math.sin(Math.PI / 6);
 
             // For centering the board
-            boardOffset[0] = (two.width  - HexW * (map.dims.w * 2 + 1) ) / 2;
-            boardOffset[1] = (two.height - HexH * (map.dims.h * 3    ) ) / 2;
+            boardOffset[0] = (two.width  - HexW * (map.tileMap.dims.w * 2 + 1) ) / 2;
+            boardOffset[1] = (two.height - HexH * (map.tileMap.dims.h * 3    ) ) / 2;
 
             // Label some important things
             var province = map.provinces[provinceID];
@@ -506,11 +530,11 @@ var Render = new function () {
                          [1]    
                                     
                          / \
-                       /     \
-                [0]  /         \  [2]
-                    |           |
-                    |     c     |
-                    |           |
+                       /  |  \
+                [0]  /   HexH  \  [2]
+                    |     |     |
+                    |-----c     |
+                    | HexW      |
                 [5]  \         /  [3]
                        \     /
                          \ /
@@ -520,119 +544,77 @@ var Render = new function () {
 
                 // calculate coordinates of each corner
                 var corners = [
-                    [ xc - HexW , yc + HexH     ],
-                    [ xc        , yc + HexH * 2 ],
-                    [ xc + HexW , yc + HexH     ],
-                    [ xc + HexW , yc - HexH     ],
+                    [ xc - HexW , yc - HexH     ],
                     [ xc        , yc - HexH * 2 ],
-                    [ xc - HexW , yc - HexH     ]
+                    [ xc + HexW , yc - HexH     ],
+                    [ xc + HexW , yc + HexH     ],
+                    [ xc        , yc + HexH * 2 ],
+                    [ xc - HexW , yc + HexH     ]
                 ];
 
-                // calculate edges between corners
-                var edges = [
-                    [corners[0], corners[1]],
-                    [corners[1], corners[2]],
-                    [corners[2], corners[3]],
-                    [corners[3], corners[4]],
-                    [corners[4], corners[5]],
-                    [corners[5], corners[0]]
-                ]
+                //Shit tier rendering 4 da testing b0ss
+                    // var self = this;
+                    // new NewShape.Path({
+                    //     points:corners,
+                    //     fill:pallete[province.owner+1]
+                    // }).onclick(function(e){
+                    //     debug.log(self.provinceID)
+                    // });
+
+                var surroundingHexes = getHexesSurrounding(x,y);
+                for (var side = 0; side < 6; side++) {
+                    if (!surroundingHexes[side]) continue;
+
+                    var y2 = surroundingHexes[side][0];
+                    var x2 = surroundingHexes[side][1];
 
 
+                    // We want to check two cases that a tile is on the border:
+                    // Bordering another owner's province, OR
+                    // Brodering the edge of the world
 
-                //Shit tier rendering kek
-                var self = this;
-                NewShape.Path({
-                    points:corners,
-                    fill:pallete[province.owner+1]
-                }).onclick(function(e){
-                    debug.log(self.provinceID)
-                });
+                    var isOnEdgeOfBoard;
+                    var isBorderingOtherProvince;
 
+                    // Check if the tile being referenced is on the outside of the board
+                    isOnEdgeOfBoard = (
+                        y2 < 0 || y2 > map.tileMap.dims.h-1 ||
+                        x2 < 0 || x2 > map.tileMap.dims.w-1
+                    );
 
+                    if (!isOnEdgeOfBoard) isBorderingOtherProvince = (
+                        map.tileMap[y ][x ].province !==
+                        map.tileMap[y2][x2].province
+                    );
 
-
-
-                
-
-
-                var tilePos = 0;
-                // For the row above, at, and beneath the current tile
-                for (var dy = -1; dy <= 1; dy++) {
-                    
-                    // Which tiles need to be checked in a row depends on
-                    // if the row is even or oddly numbered, or if the row
-                    // being checked is the same row that the tile rests on
-
-                    var dx_range = [];
-                    if      (dy == 0)    dx_range = [-1, 1];  // Same Row as tile
-                    else if (y % 2 == 1) dx_range = [ 0, 1];  // Row is an Odd Row
-                    else if (y % 2 == 0) dx_range = [-1, 0];  // Row is an Even row
-                    
-                    // Fianlly, we can iterate through each of the tiles surrounding the tile
-                    for (var dx = dx_range[0] ; dx <= dx_range[1] ; dx++, tilePos++) {
-                        // Check if we are at the current tile
-                        if (dy == 0 && dx == 0) { tilePos--; continue; } 
-
-                        // We have two border conditions that need to be checked:
-                        var isOnEdgeOfBoard;
-
-                        // Check if the tile being referenced is on the outside of the board
-                        isOnEdgeOfBoard = (
-                            y + dy < 0 || y + dy > map.dims.h-1 ||
-                            x + dx < 0 || x + dx > map.dims.w-1
-                        );
-
-                        // If the tiles being compared with is not out of bounds, we need to
-                        // figure out if it belongs to another province
-                        if (!isOnEdgeOfBoard) {
-                            // if (map.tileMap[y     ][x     ].owner == 0) continue;
-                            // if (map.tileMap[y + dy][x + dx].owner == 0) continue;
-
-                            isBorderingOtherProvince = (
-                                map.tileMap[y + dy][x + dx].province !==
-                                map.tileMap[y     ][x     ].province
-                            );
-                        }
-
-                        // If we have met a condition for bordering
-                        if (isOnEdgeOfBoard || isBorderingOtherProvince) {
-
-                            tilePos = Math.abs(3-tilePos);
-
-                            // debug.log(edges[tilePos])
-
-                            // NewShape.Path({
-                            //     points:corners,
-                            //     fill:"grey"
-                            // })
-
-                            // NewShape.Circle({
-                            //     x:edges[tilePos][0][0],
-                            //     y:edges[tilePos][0][1]
-                            // });
-                            // NewShape.Circle({
-                            //     x:edges[tilePos][1][0],
-                            //     y:edges[tilePos][1][1]
-                            // });
-
-                            // province_points.push(edges[tilePos][0]);
-                            // province_points.push(edges[tilePos][1]);
-                        }
+                    if (isBorderingOtherProvince || isOnEdgeOfBoard) {
+                        // Thanks to the way this mish mash of an algo works, we only need to push
+                        // one corner onto the province_points array, as somehow, all points are 
+                        // guaranteed to be covered. Why? I don't know. Am I arguing with results?
+                        // Hell no!
+                        province_points.push(corners[side]);
                     }
                 }
+
             }
 
-            // debug.log(province_points)
+            province_points = uniq(province_points);
+            province_points = hull(province_points, hexradius*1.5)
 
+            // debug.log(province_points);
 
-            // var self = this;
-            // this.twoJS_obj = NewShape.Path({
-            //     points: province_points,
-            //     fill: pallete[province.owner]
-            // }).onclick(function(){
-            //     debug.log(self.provinceID);
-            // });
+            var self = this;
+            this.Primitive = new NewShape.Path({
+                points: province_points,
+                fill: pallete[province.owner]
+            })
+
+            
+            this.Primitive.onclick(function(){
+                debug.log(self.Primitive);
+                self.Primitive.path.fill = getRandomColor();
+                two.update();
+            });
 
 
             // Set some useful attributes to our object
@@ -646,8 +628,8 @@ var Render = new function () {
         hexradius = 
             Math.floor(
                 Math.min(
-                    two.width  / map.dims.w,
-                    two.height / map.dims.h
+                    two.width  / map.tileMap.dims.w,
+                    two.height / map.tileMap.dims.h
                 ) / 1.75
             );
 
@@ -655,25 +637,31 @@ var Render = new function () {
 
         debug.time("Rendering Board")
 
+
+
+
         Render.rendered_objects["provinces"] = [];
+
         for (var i = 0; i < map.provinces.length; i++) {
-            Render.rendered_objects.provinces.push( new Touchables.Province({id: i}) );
+            Render.rendered_objects.provinces.push( new Touchables.Province({id:i}) );
         }
+
+        // Render.rendered_objects.provinces.push( new Touchables.Province({id:21}) );
+
+
+
+
+
         debug.timeEnd("Rendering Board")
     };
 };
-
-
-
-
-
 
 
 var map;
 
 function init() {
     var SEED = 2 //new Date().getTime();
-    var SCALE = 10;
+    var SCALE = 15;
     var PLAYERS = 3;
     if (SCALE < 5 || SCALE =="" || !parseInt(SCALE)) SCALE = 15;
     
@@ -687,6 +675,15 @@ function init() {
 }
 
 window.onload = init;
+
+
+
+
+
+
+
+
+
 
 
 
