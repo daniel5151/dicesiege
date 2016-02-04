@@ -400,29 +400,39 @@ function generatePallete(numColors) {
 }
 
 var Render = new function () {
-    // ------------------- PRIVATE ------------------- //
+    /*
+        PRIVATE METHODS
+    */
 
-    // DOM ELEMENTS
+    // ---- ESSENTIAL ELEMENTS ---- //
     var elem = document.getElementById('board');
     var two = new Two({
         fullscreen:true,
-        // type:Two.Types.webgl
+        // type:Two.Types.webgl,
+        // type:Two.Types.canvas,
         // width: 285,
         // height: 200
     }).appendTo(elem);
 
-    // SHARED ASSETS
+    // ---- SHARED ASSETS ---- //
     var pallete = generatePallete(3);
     pallete.unshift("white");
 
-    // BOARD VARS
+    // ---- BOARD VARS ---- //
+
     // This value actually doesn't matter...
     // Just keep it big enough so that floating point arithmetic
     // doesn't strat fucking with the Hull algorithm
     var hexradius = 10;
+    
+    // Useful values
+    var HexW = hexradius * Math.cos(Math.PI / 6);
+    var HexH = hexradius * Math.sin(Math.PI / 6);
+
+    // ---- ACTUAL RENDERING METHODS ---- //
 
     // PRIMITIVES
-    var NewShape = {
+    var Primitives = {
         Circle:function(props){
             var x         = props.x         || 10;
             var y         = props.y         || 10;
@@ -441,7 +451,7 @@ var Render = new function () {
             two.update();
 
             circle.onclick = function (f) {
-                if (two.type == Two.Types.webgl) return;
+                if (two.type !== Two.Types.svg) return;
                 this._renderer.elem.addEventListener('click', f);
             }
 
@@ -466,6 +476,9 @@ var Render = new function () {
             var stroke    = props.stroke    || "black";
             var linewidth = props.linewidth || 1;
 
+            var noStroke  = props.noStroke  || false;
+            var noFill    = props.noFill    || false;
+
             var anchoredPoints = [];
             for (var i = 0; i < points.length; i++) {
                 anchoredPoints.push(new Two.Anchor(
@@ -481,6 +494,9 @@ var Render = new function () {
 
             this.path = two.makePath(anchoredPoints, false);
 
+            if (noStroke) linewidth = 0;
+            if (noFill)   fill = "rgba(0,0,0,0)";
+
             this.path.linewidth = linewidth;
             this.path.stroke = stroke;
             this.path.fill = fill;
@@ -489,7 +505,7 @@ var Render = new function () {
 
             var self = this;
             this.onclick = function (f) {
-                if (two.type == Two.Types.webgl) return;
+                if (two.type !== Two.Types.svg) return;
                 self.path._renderer.elem.addEventListener('click', function (e) {
                     f(e,self);
                 });
@@ -497,20 +513,16 @@ var Render = new function () {
         }
     };
 
-    // ------------------- PUBLIC ------------------- //
-    var Touchables = {
+    // ---- GAME OBJECTS ---- //
+    var GameObjects = {
         Province:function (props) {
             var provinceID = props.id;
 
-            // Some useful values
-            var HexW = hexradius * Math.cos(Math.PI / 6);
-            var HexH = hexradius * Math.sin(Math.PI / 6);
+            this.provinceID = provinceID;
 
             // Label some important things
             var province = map.provinces[provinceID];
             var tiles    = province.tiles;
-
-
 
             // This is the end goal.
             // We need to populate this array with the path for the province shape!
@@ -521,49 +533,21 @@ var Render = new function () {
                 var x = tiles[i][0];
                 var y = tiles[i][1];
 
-                // complicated b/c needs to account for odd rows
-                var xc = HexW * (y % 2 + 1) + 2*HexW*x; 
-                var yc = hexradius * (1 + 1.5 * y);
-
-                // DIRTY FLOATING POINT PRECISION BULLSHIT
-                                xc += 100;
-                                yc += 100;
-                // DIRTY FLOATING POINT PRECISION BULLSHIT
-
-                /*
-                The indices of each corner are...
-
-                         [1]    
-                                    
-                         / \
-                       /  |  \
-                [0]  /   HexH  \  [2]
-                    |     |     |
-                    |-----c     |
-                    | HexW      |
-                [5]  \         /  [3]
-                       \     /
-                         \ /
-                  
-                         [4]
-                */
-
                 // calculate coordinates of each corner
-                var corners = [
-                    [ xc - HexW , yc - HexH     ],
-                    [ xc        , yc - HexH * 2 ],
-                    [ xc + HexW , yc - HexH     ],
-                    [ xc + HexW , yc + HexH     ],
-                    [ xc        , yc + HexH * 2 ],
-                    [ xc - HexW , yc + HexH     ]
-                ];
+                var corners = Utils.getHexCorners(x,y)
 
-                for (var corner in corners)
+                for (var corner in corners) {
+                    // DIRTY FLOATING POINT PRECISION BULLSHIT
+                            corners[corner][0] += 100;
+                            corners[corner][1] += 100;
+                    // DIRTY FLOATING POINT PRECISION BULLSHIT
+                    
                     province_points.push(corners[corner]);
+                }
 
                 //Shit tier rendering 4 da testing b0ss
                     // var self = this;
-                    // new NewShape.Path({
+                    // new Primitives.Path({
                     //     points:corners,
                     //     fill:pallete[province.owner+1]
                     // }).onclick(function(e){
@@ -572,7 +556,9 @@ var Render = new function () {
                 //Shit tier rendering 4 da testing b0ss
             }
 
-            province_points = hull(province_points, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 ).slice(0,-1);
+            // Magic. MAGIC. MAAAGGGGIIIICCCC
+            province_points = hull(province_points, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
+            province_points = province_points.slice(0,-1);
             // Why slice? Because hull returns an array whose first element and last element are equal. lel
             
             // DIRTY FLOATING POINT PRECISION BULLSHIT
@@ -582,25 +568,64 @@ var Render = new function () {
                 }
             // DIRTY FLOATING POINT PRECISION BULLSHIT
 
-            this.Primitive = new NewShape.Path({
-                points: province_points,
-                fill: pallete[province.owner],
+            this.Primitives = new Primitives.Path({
+                points:    province_points,
+                fill:      pallete[province.owner],
                 linewidth: hexradius/10
             })
 
 
             var self = this;
-            this.Primitive.onclick(function(e,primitive){
+            this.Primitives.onclick(function(e,primitive){
                 debug.log(self);
-                self.Primitive.path.fill = getRandomColor();
+                self.Primitives.path.fill = getRandomColor();
                 two.update();
             });
-
-
-            // Set some useful attributes to our object
-            this.provinceID = provinceID;
         }
     }
+
+    // ---- UTILITY FUNCTIONS ---- //
+    var Utils = {
+        getHexCorners: function(x,y) {
+            // complicated b/c needs to account for odd rows
+            var xc = HexW * (y % 2 + 1) + 2 * HexW * x; 
+            var yc = hexradius * (1 + 1.5 * y);
+
+            /*
+            The indices of each corner are...
+
+                     [1]    
+                                
+                     / \
+                   /  |  \
+            [0]  /   HexH  \  [2]
+                |     |     |
+                |-----c     |
+                | HexW      |
+            [5]  \         /  [3]
+                   \     /
+                     \ /
+              
+                     [4]
+            */
+
+            // calculate coordinates of each corner
+            var corners = [
+                [ xc - HexW , yc - HexH     ],
+                [ xc        , yc - HexH * 2 ],
+                [ xc + HexW , yc - HexH     ],
+                [ xc + HexW , yc + HexH     ],
+                [ xc        , yc + HexH * 2 ],
+                [ xc - HexW , yc + HexH     ]
+            ];
+
+            return corners;
+        }
+    }
+
+    /*
+        PUBLIC METHODS
+    */
 
     this.rendered_objects = {}; // Tracks individual shapes
     this.rendered_groups = {};  // Tracks rendering groups
@@ -609,8 +634,9 @@ var Render = new function () {
         debug.time("Resizing Board");
 
         // ---------------------- BOARD ---------------------- //
-        var HexW = hexradius * Math.cos(Math.PI / 6);
-        var HexH = hexradius * Math.sin(Math.PI / 6);
+        HexW = hexradius * Math.cos(Math.PI / 6);
+        HexH = hexradius * Math.sin(Math.PI / 6);
+
         var BaseBoardW = (HexW * (map.tileMap.dims.w * 2 + 1) );
         var BaseBoardH = (HexH * (map.tileMap.dims.h * 3    ) );
 
@@ -636,16 +662,59 @@ var Render = new function () {
     this.init = function () {
         debug.time("Rendering Board");
 
+            Render.rendered_objects["board"] = {};
+
             // Render individual provinces
-            Render.rendered_objects["provinces"] = [];
-            for (var i = 0; i < map.provinces.length; i++) {
-                Render.rendered_objects.provinces.push( new Touchables.Province({id:i}) );
+            Render.rendered_objects.board["provinces"] = [];
+            for (var id = 0; id < map.provinces.length; id++) {
+                if (map.provinces[id].owner == 0) continue;
+                Render.rendered_objects.board.provinces.push( new GameObjects.Province({id:id}) );
             }
+
+            // Render board outline
+            var outlinePoints = [];
+            for (var x = 0; x < map.tileMap.dims.w; x++) {
+                for (var y = 0; y < map.tileMap.dims.h; y++) {
+                    // TODO: Add some if statement to skip internal tiles
+
+                    // calculate coordinates of each corner
+                    var corners = Utils.getHexCorners(x,y)
+
+                    for (var corner in corners) {
+                        // DIRTY FLOATING POINT PRECISION BULLSHIT
+                                corners[corner][0] += 100;
+                                corners[corner][1] += 100;
+                        // DIRTY FLOATING POINT PRECISION BULLSHIT
+                        
+                        outlinePoints.push(corners[corner]);
+                    }
+                }
+            }
+
+            // Magic. MAGIC. MAAAGGGGIIIICCCC
+            outlinePoints = hull(outlinePoints, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
+            outlinePoints = outlinePoints.slice(0,-1);
+            // Why slice? Because hull returns an array whose first element and last element are equal. lel
+            
+            // DIRTY FLOATING POINT PRECISION BULLSHIT
+                for (var i = 0; i < outlinePoints.length; i++) {
+                    outlinePoints[i][0]-=100;
+                    outlinePoints[i][1]-=100;
+                }
+            // DIRTY FLOATING POINT PRECISION BULLSHIT
+
+            Render.rendered_objects.board["outline"] = new Primitives.Path({
+                points: outlinePoints,
+                noFill: true,
+                linewidth: hexradius/10
+            })
 
             // Group rendered provinces into an easy to manage Group
             Render.rendered_groups["board"] = two.makeGroup();
-            for (var i = 0; i < Render.rendered_objects.provinces.length; i++) {
-                Render.rendered_groups["board"].add(Render.rendered_objects.provinces[i].Primitive.path);
+            
+            Render.rendered_groups["board"].add(Render.rendered_objects.board.outline.path);
+            for (var i = 0; i < Render.rendered_objects.board.provinces.length; i++) {
+                Render.rendered_groups["board"].add(Render.rendered_objects.board.provinces[i].Primitives.path);
             }
 
             // Attach event handlers
