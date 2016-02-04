@@ -405,7 +405,8 @@ var Render = new function () {
     // DOM ELEMENTS
     var elem = document.getElementById('board');
     var two = new Two({
-        fullscreen:true
+        fullscreen:true,
+        // type:Two.Types.webgl
         // width: 285,
         // height: 200
     }).appendTo(elem);
@@ -416,7 +417,6 @@ var Render = new function () {
 
     // BOARD VARS
     var hexradius = 10;
-    var boardOffset = [0,0];
 
     // PRIMITIVES
     var NewShape = {
@@ -460,7 +460,7 @@ var Render = new function () {
 
             var fill      = props.fill      || "orangered";
             var stroke    = props.stroke    || "black";
-            var linewidth = props.linewidth || 2;
+            var linewidth = props.linewidth || hexradius/10;
 
             var anchoredPoints = [];
             for (var i = 0; i < points.length; i++) {
@@ -498,10 +498,6 @@ var Render = new function () {
             var HexW = hexradius * Math.cos(Math.PI / 6);
             var HexH = hexradius * Math.sin(Math.PI / 6);
 
-            // For centering the board
-            boardOffset[0] = (two.width  - HexW * (map.tileMap.dims.w * 2 + 1) ) / 2;
-            boardOffset[1] = (two.height - HexH * (map.tileMap.dims.h * 3    ) ) / 2;
-
             // Label some important things
             var province = map.provinces[provinceID];
             var tiles    = province.tiles;
@@ -521,8 +517,10 @@ var Render = new function () {
                 var xc = HexW * (y % 2 + 1) + 2*HexW*x; 
                 var yc = hexradius * (1 + 1.5 * y);
 
-                xc += boardOffset[0];
-                yc += boardOffset[1];
+                // DIRTY FLOATING POINT PRECISION BULLSHIT
+                                xc += 100;
+                                yc += 100;
+                // DIRTY FLOATING POINT PRECISION BULLSHIT
 
                 /*
                 The indices of each corner are...
@@ -552,6 +550,9 @@ var Render = new function () {
                     [ xc - HexW , yc + HexH     ]
                 ];
 
+                for (var corner in corners)  province_points.push(corners[corner]);
+                continue;
+
                 //Shit tier rendering 4 da testing b0ss
                     // var self = this;
                     // new NewShape.Path({
@@ -560,48 +561,52 @@ var Render = new function () {
                     // }).onclick(function(e){
                     //     debug.log(self.provinceID)
                     // });
+                
+                // var surroundingHexes = getHexesSurrounding(x,y);
+                // for (var side = 0; side < 6; side++) {
+                //     if (!surroundingHexes[side]) continue;
 
-                var surroundingHexes = getHexesSurrounding(x,y);
-                for (var side = 0; side < 6; side++) {
-                    if (!surroundingHexes[side]) continue;
-
-                    var y2 = surroundingHexes[side][0];
-                    var x2 = surroundingHexes[side][1];
+                //     var y2 = surroundingHexes[side][0];
+                //     var x2 = surroundingHexes[side][1];
 
 
-                    // We want to check two cases that a tile is on the border:
-                    // Bordering another owner's province, OR
-                    // Brodering the edge of the world
+                //     // We want to check two cases that a tile is on the border:
+                //     // Bordering another owner's province, OR
+                //     // Brodering the edge of the world
 
-                    var isOnEdgeOfBoard;
-                    var isBorderingOtherProvince;
+                //     var isOnEdgeOfBoard;
+                //     var isBorderingOtherProvince;
 
-                    // Check if the tile being referenced is on the outside of the board
-                    isOnEdgeOfBoard = (
-                        y2 < 0 || y2 > map.tileMap.dims.h-1 ||
-                        x2 < 0 || x2 > map.tileMap.dims.w-1
-                    );
+                //     // Check if the tile being referenced is on the outside of the board
+                //     isOnEdgeOfBoard = (
+                //         y2 < 0 || y2 > map.tileMap.dims.h-1 ||
+                //         x2 < 0 || x2 > map.tileMap.dims.w-1
+                //     );
 
-                    if (!isOnEdgeOfBoard) isBorderingOtherProvince = (
-                        map.tileMap[y ][x ].province !==
-                        map.tileMap[y2][x2].province
-                    );
+                //     if (!isOnEdgeOfBoard) isBorderingOtherProvince = (
+                //         map.tileMap[y ][x ].province !==
+                //         map.tileMap[y2][x2].province
+                //     );
 
-                    if (isBorderingOtherProvince || isOnEdgeOfBoard) {
-                        // Thanks to the way this mish mash of an algo works, we only need to push
-                        // one corner onto the province_points array, as somehow, all points are 
-                        // guaranteed to be covered. Why? I don't know. Am I arguing with results?
-                        // Hell no!
-                        province_points.push(corners[side]);
-                    }
-                }
-
+                //     if (isBorderingOtherProvince || isOnEdgeOfBoard) {
+                //         // Thanks to the way this mish mash of an algo works, we only need to push
+                //         // one corner onto the province_points array, as somehow, all points are 
+                //         // guaranteed to be covered. Why? I don't know. Am I arguing with results?
+                //         // Hell no!
+                //         province_points.push(corners[side]);
+                //     }
+                // }
             }
 
-            province_points = uniq(province_points);
-            province_points = hull(province_points, hexradius*1.5)
-
-            // debug.log(province_points);
+            province_points = hull(province_points, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 ).slice(0,-1);
+            // Why slice? Because hull returns an array whose first element and last element are equal. lel
+            
+            // DIRTY FLOATING POINT PRECISION BULLSHIT
+            for (var i = 0; i < province_points.length; i++) {
+                province_points[i][0]-=100;
+                province_points[i][1]-=100;
+            }
+            // DIRTY FLOATING POINT PRECISION BULLSHIT
 
             var self = this;
             this.Primitive = new NewShape.Path({
@@ -609,9 +614,9 @@ var Render = new function () {
                 fill: pallete[province.owner]
             })
 
-            
+
             this.Primitive.onclick(function(){
-                debug.log(self.Primitive);
+                debug.log(self);
                 self.Primitive.path.fill = getRandomColor();
                 two.update();
             });
@@ -622,7 +627,8 @@ var Render = new function () {
         }
     }
 
-    this.rendered_objects = {};
+    this.rendered_objects = {}; // Tracks individual shapes
+    this.rendered_groups = {};  // Tracks rendering groups
 
     this.initBoard = function () {
         hexradius = 
@@ -633,12 +639,7 @@ var Render = new function () {
                 ) / 1.75
             );
 
-        debug.log(pallete)
-
         debug.time("Rendering Board")
-
-
-
 
         Render.rendered_objects["provinces"] = [];
 
@@ -648,9 +649,26 @@ var Render = new function () {
 
         // Render.rendered_objects.provinces.push( new Touchables.Province({id:21}) );
 
+        Render.rendered_groups["board"] = two.makeGroup();
+        for (var i = 0; i < Render.rendered_objects.provinces.length; i++) {
+            Render.rendered_groups["board"].add(Render.rendered_objects.provinces[i].Primitive.path);
+        }
+
+        // Center the board:
+        var HexW = hexradius * Math.cos(Math.PI / 6);
+        var HexH = hexradius * Math.sin(Math.PI / 6);
+        var BoardW = (two.width  - HexW * (map.tileMap.dims.w * 2 + 1) )
+        var BoardH = (two.height - HexH * (map.tileMap.dims.h * 3    ) )
 
 
 
+
+        Render.rendered_groups["board"].translation.set(BoardW/2, BoardH/2);
+
+        // Render.rendered_groups["board"].rotation = Math.PI;
+        Render.rendered_groups["board"].scale = 1;
+
+        two.update()
 
         debug.timeEnd("Rendering Board")
     };
@@ -660,7 +678,7 @@ var Render = new function () {
 var map;
 
 function init() {
-    var SEED = 2 //new Date().getTime();
+    var SEED = new Date().getTime();
     var SCALE = 15;
     var PLAYERS = 3;
     if (SCALE < 5 || SCALE =="" || !parseInt(SCALE)) SCALE = 15;
