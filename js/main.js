@@ -64,14 +64,16 @@ function getHexesSurrounding(x, y) {
 //          bordering - a array of provinces that border this province
 
 function Map(dims, players, seed) {
-
     // --------------------- MAP INITIALIZATION --------------------- //
 
     console.time("Total Map Generation Time");
 
+    // Sanity Checks
+    if (players < 2) throw new Error("Invalid number of player");
+
+    // Stuff
     var provinces = [];
     var provinceID = 0;
-
 
     // generate map using a seed, or random
     var seed = (seed!="")?seed:Math.random();
@@ -337,7 +339,7 @@ function Map(dims, players, seed) {
     // this object the map properties
 
     // given properties (for easy reference)
-
+    this.n_players = players;
     this.seed = seed;
 
     // generated map
@@ -415,8 +417,7 @@ var Render = new function () {
     }).appendTo(elem);
 
     // ---- SHARED ASSETS ---- //
-    var pallete = generatePallete(3);
-    pallete.unshift("white");
+    var pallete;
 
     // ---- BOARD VARS ---- //
 
@@ -562,10 +563,12 @@ var Render = new function () {
             // Why slice? Because hull returns an array whose first element and last element are equal. lel
             
             // DIRTY FLOATING POINT PRECISION BULLSHIT
-                for (var i = 0; i < province_points.length; i++) {
-                    province_points[i][0]-=100;
-                    province_points[i][1]-=100;
-                }
+            province_points = province_points.map(function (pt) {
+                return [
+                    pt[0] - 100, 
+                    pt[1] - 100
+                ];
+            })
             // DIRTY FLOATING POINT PRECISION BULLSHIT
 
             this.Primitives = new Primitives.Path({
@@ -660,65 +663,75 @@ var Render = new function () {
     }
 
     this.init = function () {
+        // ------ SHARED ASSETS ------ //
+        pallete = generatePallete(map.n_players);
+        pallete.unshift("white");
+
+        // ---------- BOARD ---------- //
         debug.time("Rendering Board");
 
-            Render.rendered_objects["board"] = {};
+        Render.rendered_objects["board"] = {};
 
-            // Render individual provinces
-            Render.rendered_objects.board["provinces"] = [];
-            for (var id = 0; id < map.provinces.length; id++) {
-                if (map.provinces[id].owner == 0) continue;
-                Render.rendered_objects.board.provinces.push( new GameObjects.Province({id:id}) );
-            }
+        /* PROVINCES */
+        Render.rendered_objects.board["provinces"] = [];
+        for (var id = 0; id < map.provinces.length; id++) {
+            if (map.provinces[id].owner == 0) continue;
+            Render.rendered_objects.board.provinces.push( new GameObjects.Province({id:id}) );
+        }
 
-            // Render board outline
-            var outlinePoints = [];
-            for (var x = 0; x < map.tileMap.dims.w; x++) {
-                for (var y = 0; y < map.tileMap.dims.h; y++) {
-                    // TODO: Add some if statement to skip internal tiles
+        /* OUTLINE */
+        var outlinePoints = [];
+        for (var x = 0; x < map.tileMap.dims.w; x++) {
+            for (var y = 0; y < map.tileMap.dims.h; y++) {
+                // TODO: Add some if statement to skip internal tiles
 
-                    // calculate coordinates of each corner
-                    var corners = Utils.getHexCorners(x,y)
+                // calculate coordinates of each corner
+                var corners = Utils.getHexCorners(x,y)
 
-                    for (var corner in corners) {
-                        // DIRTY FLOATING POINT PRECISION BULLSHIT
-                                corners[corner][0] += 100;
-                                corners[corner][1] += 100;
-                        // DIRTY FLOATING POINT PRECISION BULLSHIT
-                        
-                        outlinePoints.push(corners[corner]);
-                    }
+                for (var corner in corners) {
+                    // DIRTY FLOATING POINT PRECISION BULLSHIT
+                            corners[corner][0] += 100;
+                            corners[corner][1] += 100;
+                    // DIRTY FLOATING POINT PRECISION BULLSHIT
+                    
+                    outlinePoints.push(corners[corner]);
                 }
             }
+        }
 
-            // Magic. MAGIC. MAAAGGGGIIIICCCC
-            outlinePoints = hull(outlinePoints, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
-            outlinePoints = outlinePoints.slice(0,-1);
-            // Why slice? Because hull returns an array whose first element and last element are equal. lel
-            
-            // DIRTY FLOATING POINT PRECISION BULLSHIT
-                for (var i = 0; i < outlinePoints.length; i++) {
-                    outlinePoints[i][0]-=100;
-                    outlinePoints[i][1]-=100;
-                }
-            // DIRTY FLOATING POINT PRECISION BULLSHIT
+        // Magic. MAGIC. MAAAGGGGIIIICCCC
+        outlinePoints = hull(outlinePoints, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
+        outlinePoints = outlinePoints.slice(0,-1);
+        
+        // DIRTY FLOATING POINT PRECISION BULLSHIT
+        outlinePoints = outlinePoints.map(function (pt) {
+            return [
+                pt[0] - 100, 
+                pt[1] - 100
+            ];
+        })
+        // DIRTY FLOATING POINT PRECISION BULLSHIT
 
-            Render.rendered_objects.board["outline"] = new Primitives.Path({
-                points: outlinePoints,
-                noFill: true,
-                linewidth: hexradius/10
-            })
+        Render.rendered_objects.board["outline"] = new Primitives.Path({
+            points: outlinePoints,
+            noFill: true,
+            linewidth: hexradius/10
+        })
 
-            // Group rendered provinces into an easy to manage Group
-            Render.rendered_groups["board"] = two.makeGroup();
-            
-            Render.rendered_groups["board"].add(Render.rendered_objects.board.outline.path);
-            for (var i = 0; i < Render.rendered_objects.board.provinces.length; i++) {
-                Render.rendered_groups["board"].add(Render.rendered_objects.board.provinces[i].Primitives.path);
-            }
+        /* Group rendered provinces into an easy to manage Two.Group */
+        Render.rendered_groups["board"] = two.makeGroup();
 
-            // Attach event handlers
-            window.onresize = this.resize;
+        // Add outline first
+        Render.rendered_groups["board"].add(Render.rendered_objects.board.outline.path);
+
+        // Add provinces
+        for (var i = 0; i < Render.rendered_objects.board.provinces.length; i++) {
+            Render.rendered_groups["board"].add(Render.rendered_objects.board.provinces[i].Primitives.path);
+        }
+
+        /* Attach event handlers*/
+        window.onresize = this.resize;
+
         debug.timeEnd("Rendering Board");
         
 
