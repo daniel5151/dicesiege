@@ -416,6 +416,9 @@ var Render = new function () {
     pallete.unshift("white");
 
     // BOARD VARS
+    // This value actually doesn't matter...
+    // Just keep it big enough so that floating point arithmetic
+    // doesn't strat fucking with the Hull algorithm
     var hexradius = 10;
 
     // PRIMITIVES
@@ -438,6 +441,7 @@ var Render = new function () {
             two.update();
 
             circle.onclick = function (f) {
+                if (two.type == Two.Types.webgl) return;
                 this._renderer.elem.addEventListener('click', f);
             }
 
@@ -460,7 +464,7 @@ var Render = new function () {
 
             var fill      = props.fill      || "orangered";
             var stroke    = props.stroke    || "black";
-            var linewidth = props.linewidth || hexradius/10;
+            var linewidth = props.linewidth || 1;
 
             var anchoredPoints = [];
             for (var i = 0; i < points.length; i++) {
@@ -468,7 +472,10 @@ var Render = new function () {
                     points[i][0], 
                     points[i][1], 
                     0, 0, 0, 0, 
-                    ((i==0)?Two.Commands.move:Two.Commands.line)
+                    ((i == 0)
+                        ? Two.Commands.move
+                        : Two.Commands.line
+                    )
                 ));
             };
 
@@ -482,6 +489,7 @@ var Render = new function () {
 
             var self = this;
             this.onclick = function (f) {
+                if (two.type == Two.Types.webgl) return;
                 self.path._renderer.elem.addEventListener('click', function (e) {
                     f(e,self);
                 });
@@ -550,8 +558,8 @@ var Render = new function () {
                     [ xc - HexW , yc + HexH     ]
                 ];
 
-                for (var corner in corners)  province_points.push(corners[corner]);
-                continue;
+                for (var corner in corners)
+                    province_points.push(corners[corner]);
 
                 //Shit tier rendering 4 da testing b0ss
                     // var self = this;
@@ -561,61 +569,28 @@ var Render = new function () {
                     // }).onclick(function(e){
                     //     debug.log(self.provinceID)
                     // });
-                
-                // var surroundingHexes = getHexesSurrounding(x,y);
-                // for (var side = 0; side < 6; side++) {
-                //     if (!surroundingHexes[side]) continue;
-
-                //     var y2 = surroundingHexes[side][0];
-                //     var x2 = surroundingHexes[side][1];
-
-
-                //     // We want to check two cases that a tile is on the border:
-                //     // Bordering another owner's province, OR
-                //     // Brodering the edge of the world
-
-                //     var isOnEdgeOfBoard;
-                //     var isBorderingOtherProvince;
-
-                //     // Check if the tile being referenced is on the outside of the board
-                //     isOnEdgeOfBoard = (
-                //         y2 < 0 || y2 > map.tileMap.dims.h-1 ||
-                //         x2 < 0 || x2 > map.tileMap.dims.w-1
-                //     );
-
-                //     if (!isOnEdgeOfBoard) isBorderingOtherProvince = (
-                //         map.tileMap[y ][x ].province !==
-                //         map.tileMap[y2][x2].province
-                //     );
-
-                //     if (isBorderingOtherProvince || isOnEdgeOfBoard) {
-                //         // Thanks to the way this mish mash of an algo works, we only need to push
-                //         // one corner onto the province_points array, as somehow, all points are 
-                //         // guaranteed to be covered. Why? I don't know. Am I arguing with results?
-                //         // Hell no!
-                //         province_points.push(corners[side]);
-                //     }
-                // }
+                //Shit tier rendering 4 da testing b0ss
             }
 
             province_points = hull(province_points, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 ).slice(0,-1);
             // Why slice? Because hull returns an array whose first element and last element are equal. lel
             
             // DIRTY FLOATING POINT PRECISION BULLSHIT
-            for (var i = 0; i < province_points.length; i++) {
-                province_points[i][0]-=100;
-                province_points[i][1]-=100;
-            }
+                for (var i = 0; i < province_points.length; i++) {
+                    province_points[i][0]-=100;
+                    province_points[i][1]-=100;
+                }
             // DIRTY FLOATING POINT PRECISION BULLSHIT
 
-            var self = this;
             this.Primitive = new NewShape.Path({
                 points: province_points,
-                fill: pallete[province.owner]
+                fill: pallete[province.owner],
+                linewidth: hexradius/10
             })
 
 
-            this.Primitive.onclick(function(){
+            var self = this;
+            this.Primitive.onclick(function(e,primitive){
                 debug.log(self);
                 self.Primitive.path.fill = getRandomColor();
                 two.update();
@@ -630,47 +605,57 @@ var Render = new function () {
     this.rendered_objects = {}; // Tracks individual shapes
     this.rendered_groups = {};  // Tracks rendering groups
 
-    this.initBoard = function () {
-        hexradius = 
-            Math.floor(
-                Math.min(
-                    two.width  / map.tileMap.dims.w,
-                    two.height / map.tileMap.dims.h
-                ) / 1.75
-            );
+    this.resize = function () {
+        debug.time("Resizing Board");
 
-        debug.time("Rendering Board")
-
-        Render.rendered_objects["provinces"] = [];
-
-        for (var i = 0; i < map.provinces.length; i++) {
-            Render.rendered_objects.provinces.push( new Touchables.Province({id:i}) );
-        }
-
-        // Render.rendered_objects.provinces.push( new Touchables.Province({id:21}) );
-
-        Render.rendered_groups["board"] = two.makeGroup();
-        for (var i = 0; i < Render.rendered_objects.provinces.length; i++) {
-            Render.rendered_groups["board"].add(Render.rendered_objects.provinces[i].Primitive.path);
-        }
-
-        // Center the board:
+        // ---------------------- BOARD ---------------------- //
         var HexW = hexradius * Math.cos(Math.PI / 6);
         var HexH = hexradius * Math.sin(Math.PI / 6);
-        var BoardW = (two.width  - HexW * (map.tileMap.dims.w * 2 + 1) )
-        var BoardH = (two.height - HexH * (map.tileMap.dims.h * 3    ) )
+        var BaseBoardW = (HexW * (map.tileMap.dims.w * 2 + 1) );
+        var BaseBoardH = (HexH * (map.tileMap.dims.h * 3    ) );
+
+        var scale = Math.min(
+            two.width  / BaseBoardW * 0.975,    // 0.975 is a nice padding value
+            two.height / BaseBoardH * 0.975
+        )
+
+        var ScaledBoardW = BaseBoardW * scale;
+        var ScaledBoardH = BaseBoardH * scale;
+
+        Render.rendered_groups["board"].scale = scale;
+        Render.rendered_groups["board"].translation.set(
+            (two.width  - ScaledBoardW) / 2,
+            (two.height - ScaledBoardH) / 2
+        );
+
+        two.update();
+
+        debug.timeEnd("Resizing Board");
+    }
+
+    this.init = function () {
+        debug.time("Rendering Board");
+
+            // Render individual provinces
+            Render.rendered_objects["provinces"] = [];
+            for (var i = 0; i < map.provinces.length; i++) {
+                Render.rendered_objects.provinces.push( new Touchables.Province({id:i}) );
+            }
+
+            // Group rendered provinces into an easy to manage Group
+            Render.rendered_groups["board"] = two.makeGroup();
+            for (var i = 0; i < Render.rendered_objects.provinces.length; i++) {
+                Render.rendered_groups["board"].add(Render.rendered_objects.provinces[i].Primitive.path);
+            }
+
+            // Attach event handlers
+            window.onresize = this.resize;
+        debug.timeEnd("Rendering Board");
+        
 
 
-
-
-        Render.rendered_groups["board"].translation.set(BoardW/2, BoardH/2);
-
-        // Render.rendered_groups["board"].rotation = Math.PI;
-        Render.rendered_groups["board"].scale = 1;
-
-        two.update()
-
-        debug.timeEnd("Rendering Board")
+        // Render everyhting!
+        this.resize();
     };
 };
 
@@ -689,7 +674,7 @@ function init() {
     map = new Map(BOARD_DIMENSIONS,PLAYERS,SEED);
     
     // TableRender();
-    Render.initBoard();
+    Render.init();
 }
 
 window.onload = init;
