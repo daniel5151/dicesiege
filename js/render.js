@@ -425,7 +425,7 @@ var Render = new function () {
 
         var prevX = -1;
         var prevY = -1;
-        var scaling;
+        var scaling = false;
 
         $stage.addEventListener("mousedown", function(e) {
             prevX = e.pageX;
@@ -454,6 +454,8 @@ var Render = new function () {
         $stage.addEventListener("touchstart", function(e) {
             prevX = e.targetTouches[0].pageX;
             prevY = e.targetTouches[0].pageY;
+
+            if(e.touches.length == 2) { scaling = true; }
         });
         $stage.addEventListener("touchmove", function(e) {
             if (e.touches.length == 1) {
@@ -471,10 +473,25 @@ var Render = new function () {
                 zui.zoomBy( ((Math.random()>0.5)?0.000000001:-0.000000001), 0,0);
                 two.update();
             }
+
+            if (scaling && e.touches.length == 2) {
+                var newDist = (Math.sqrt(
+                    (e.touches[0].pageX-e.touches[1].pageX) * (e.touches[0].pageX-e.touches[1].pageX) +
+                    (e.touches[0].pageY-e.touches[1].pageY) * (e.touches[0].pageY-e.touches[1].pageY))
+                );
+
+                // prevDist = newDist;
+
+                zui.zoomSet(newDist/100, e.touches[0].clientX, e.touches[0].clientY);
+
+                two.update()
+            }
         });
         $stage.addEventListener("touchend", function(e) {
             prevX = -1;
             prevY = -1;
+
+            if (scaling) scaling = false;
         });
 
     };
