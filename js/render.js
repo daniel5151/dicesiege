@@ -182,7 +182,7 @@ var Render = new function () {
                     //     points:corners,
                     //     fill:pallete[province.owner+1]
                     // }).onclick(function(e){
-                    //     debug.log(self.provinceID)
+                    //     console.log(self.provinceID)
                     // });
                 //Shit tier rendering 4 da testing b0ss
             }
@@ -209,8 +209,7 @@ var Render = new function () {
 
             var self = this;
             this.Primitive.onclick(function(e,primitive){
-                debug.log(self);
-                ReRender.colorProvince(self.provinceID, getRandomColor())
+                Game.Input.province.clicked(provinceID);
             });
         }
     }
@@ -271,7 +270,7 @@ var Render = new function () {
     //       want to use one of these functions internally.
     var ReRender = {
         resize: function () {
-            debug.time("Resizing Board");
+            console.time("Resizing Board");
 
             // ---------------------- BOARD ---------------------- //
             HexW = hexradius * Math.cos(Math.PI / 6);
@@ -296,12 +295,17 @@ var Render = new function () {
 
             two.update();
 
-            debug.timeEnd("Resizing Board");
+            console.timeEnd("Resizing Board");
         },
-
-        colorProvince: function (provinceID, color) {
-            rendered_objects.board.provinces[provinceID].Primitive.path.fill = color;
-            two.update();
+        province: {
+            color: function (provinceID, color) {
+                rendered_objects.board.provinces[provinceID].Primitive.path.fill = color;
+                two.update();
+            },
+            owner: function (provinceID, owner) {
+                rendered_objects.board.provinces[provinceID].Primitive.path.fill = pallete[owner];
+                two.update();
+            }
         }
     };
     this.ReRender = ReRender;
@@ -309,11 +313,10 @@ var Render = new function () {
     var rendered_objects = {};  // Tracks individual shapes
     var rendered_groups = {};   // Tracks rendering groups
 
-    if (debug.on) {
+    // DEBUG STUFF
         // Exposes internal objects to the outside world
-        this.RENDERED_OBJECTS = rendered_objects;
-        this.RENDERED_GROUPS = rendered_groups;
-    }
+        this.GET_RENDERED_OBJECTS = function () { return rendered_objects; }
+        this.GET_RENDERED_GROUPS  = function () { return rendered_groups;  }
 
     this.init = function () {
         // ------ SHARED ASSETS ------ //
@@ -321,7 +324,7 @@ var Render = new function () {
         pallete.unshift("white");
 
         // ---------- BOARD ---------- //
-        debug.time("Rendering Board");
+        console.time("Rendering Board");
 
         rendered_objects["board"] = {};
 
@@ -385,11 +388,40 @@ var Render = new function () {
         /* Attach event handlers*/
         two.bind("resize", ReRender.resize);
 
-        debug.timeEnd("Rendering Board");
+        console.timeEnd("Rendering Board");
         
 
 
         // Render everyhting!
         ReRender.resize();
+
+
+
+
+
+
+        // This is magic.
+        var zui = new ZUI(two);
+        zui.addLimits(0.5, 8);
+
+        // TODO: Add pinch-to-zoom for mobile.
+
+        var $stage = two.renderer.domElement;
+        function MouseWheelHandler (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            var dy = (e.wheelDeltaY || - e.deltaY) / 1000;
+
+            zui.zoomBy(dy, e.clientX, e.clientY);
+
+            two.update()
+
+            return false;
+        }
+        // IE9, Chrome, Safari, Opera
+        $stage.addEventListener("mousewheel", MouseWheelHandler, false);
+        // Firefox
+        $stage.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
     };
 };
