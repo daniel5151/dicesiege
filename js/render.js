@@ -400,12 +400,13 @@ var Render = new function () {
 
 
 
-        // This is magic.
-        var zui = new ZUI(two);
-        zui.addLimits(0.5, 8);
+        // This is magic. Bless whoever made ZUI
+        zui = new ZUI(two);
+        zui.addLimits(0.75, 8);
 
         // TODO: Add pinch-to-zoom for mobile.
 
+        // Zooming
         var $stage = two.renderer.domElement;
         function MouseWheelHandler (e) {
             e.stopPropagation();
@@ -419,9 +420,64 @@ var Render = new function () {
 
             return false;
         }
-        // IE9, Chrome, Safari, Opera
         $stage.addEventListener("mousewheel", MouseWheelHandler, false);
-        // Firefox
         $stage.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
+
+        var prevX = -1;
+        var prevY = -1;
+        var scaling;
+
+        $stage.addEventListener("mousedown", function(e) {
+            prevX = e.pageX;
+            prevY = e.pageY;
+        });
+        $stage.addEventListener("mousemove", function(e) {
+            if (prevX == -1 && prevY == -1) return;
+
+            zui.translateSurface(
+                -(prevX - e.pageX),
+                -(prevY - e.pageY)
+            )
+
+            prevX = e.pageX;
+            prevY = e.pageY;
+
+            // Why? Dunno. But it fixes things.
+            zui.zoomBy( ((Math.random()>0.5)?0.000000001:-0.000000001), e.clientX, e.clientY);
+            two.update();
+        });
+        $stage.addEventListener("mouseup", function(e) {
+            prevX = -1;
+            prevY = -1;
+        });
+
+        $stage.addEventListener("touchstart", function(e) {
+            prevX = e.targetTouches[0].pageX;
+            prevY = e.targetTouches[0].pageY;
+        });
+        $stage.addEventListener("touchmove", function(e) {
+            if (e.touches.length == 1) {
+                if (prevX == -1 && prevY == -1) return;
+
+                zui.translateSurface(
+                    -(prevX - e.targetTouches[0].pageX),
+                    -(prevY - e.targetTouches[0].pageY)
+                )
+
+                prevX = e.targetTouches[0].pageX;
+                prevY = e.targetTouches[0].pageY;
+
+                // Why? Dunno. But it fixes things.
+                zui.zoomBy( ((Math.random()>0.5)?0.000000001:-0.000000001), 0,0);
+                two.update();
+            }
+        });
+        $stage.addEventListener("touchend", function(e) {
+            prevX = -1;
+            prevY = -1;
+        });
+
     };
 };
+
+var zui;
