@@ -1,19 +1,3 @@
-// DEBUG
-var debug = {
-    on: true,
-    log: function (message) {
-        if (debug.on) console.log(message);
-    },
-    time: function (label) {
-        if (debug.on) console.time(label);
-    },
-    timeEnd: function (label) {
-        if (debug.on) console.timeEnd(label);
-    }
-}
-
-
-
 var map;
 
 function init() {
