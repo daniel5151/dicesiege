@@ -153,8 +153,6 @@ function Map(dims, players, seed) {
     debug.time("Growth by Iteration");
 
     // grow seeds by iterating
-        // var MAX_ITER = 6;
-        // while (--MAX_ITER){
     while (true) {
         // clone map
         var oldmap = [];
@@ -237,7 +235,6 @@ function Map(dims, players, seed) {
             }
         }
         if (emptycount == 0) break;
-        // debug.log(emptycount);
     }
     debug.timeEnd("Growth by Iteration");
 
@@ -393,13 +390,6 @@ function TableRender() {
 
 
 
-function generatePallete(numColors) {
-    var palette= [];
-    for (var color = 0; color < numColors; color++) {
-        palette.push(getRandomColor());
-    }
-    return palette;
-}
 
 var Render = new function () {
     /*
@@ -460,15 +450,15 @@ var Render = new function () {
             return circle;
         },
         Rect:function() {
-            var rect = two.makeRectangle(213, 100, 100, 100);
+            // var rect = two.makeRectangle(213, 100, 100, 100);
 
-            rect.fill = 'rgb(0, 200, 255)';
-            rect.opacity = 0.75;
-            rect.noStroke();
+            // rect.fill = 'rgb(0, 200, 255)';
+            // rect.opacity = 0.75;
+            // rect.noStroke();
 
-            two.update();
+            // two.update();
 
-            return rect;
+            // return rect;
         },
         Path:function (props) {
             var points    = props.points    || [[100,100],[100,200],[200,200],[200,100]];
@@ -571,24 +561,29 @@ var Render = new function () {
             })
             // DIRTY FLOATING POINT PRECISION BULLSHIT
 
-            this.Primitives = new Primitives.Path({
+            this.Primitive = new Primitives.Path({
                 points:    province_points,
                 fill:      pallete[province.owner],
                 linewidth: hexradius/10
             })
 
-
             var self = this;
-            this.Primitives.onclick(function(e,primitive){
+            this.Primitive.onclick(function(e,primitive){
                 debug.log(self);
-                self.Primitives.path.fill = getRandomColor();
-                two.update();
+                ReRender.colorProvince(self.provinceID, getRandomColor())
             });
         }
     }
 
     // ---- UTILITY FUNCTIONS ---- //
     var Utils = {
+        generatePallete: function(numColors) {
+            var palette= [];
+            for (var color = 0; color < numColors; color++) {
+                palette.push(getRandomColor());
+            }
+            return palette;
+        },
         getHexCorners: function(x,y) {
             // complicated b/c needs to account for odd rows
             var xc = HexW * (y % 2 + 1) + 2 * HexW * x; 
@@ -630,53 +625,71 @@ var Render = new function () {
         PUBLIC METHODS
     */
 
-    this.rendered_objects = {}; // Tracks individual shapes
-    this.rendered_groups = {};  // Tracks rendering groups
+    // ---- RERENDERING METHODS ---- //
+    // NOTE: I initialize it with both `var` and with `this` so that I can use it
+    //       publically, while also not having to write this.ReRender everytime I
+    //       want to use one of these functions internally.
+    var ReRender = {
+        resize: function () {
+            debug.time("Resizing Board");
 
-    this.resize = function () {
-        debug.time("Resizing Board");
+            // ---------------------- BOARD ---------------------- //
+            HexW = hexradius * Math.cos(Math.PI / 6);
+            HexH = hexradius * Math.sin(Math.PI / 6);
 
-        // ---------------------- BOARD ---------------------- //
-        HexW = hexradius * Math.cos(Math.PI / 6);
-        HexH = hexradius * Math.sin(Math.PI / 6);
+            var BaseBoardW = (HexW * (map.tileMap.dims.w * 2 + 1) );
+            var BaseBoardH = (HexH * (map.tileMap.dims.h * 3    ) );
 
-        var BaseBoardW = (HexW * (map.tileMap.dims.w * 2 + 1) );
-        var BaseBoardH = (HexH * (map.tileMap.dims.h * 3    ) );
+            var scale = Math.min(
+                two.width  / BaseBoardW * 0.975,    // 0.975 is a nice padding value
+                two.height / BaseBoardH * 0.975
+            )
 
-        var scale = Math.min(
-            two.width  / BaseBoardW * 0.975,    // 0.975 is a nice padding value
-            two.height / BaseBoardH * 0.975
-        )
+            var ScaledBoardW = BaseBoardW * scale;
+            var ScaledBoardH = BaseBoardH * scale;
 
-        var ScaledBoardW = BaseBoardW * scale;
-        var ScaledBoardH = BaseBoardH * scale;
+            rendered_groups["board"].scale = scale;
+            rendered_groups["board"].translation.set(
+                (two.width  - ScaledBoardW) / 2,
+                (two.height - ScaledBoardH) / 2
+            );
 
-        Render.rendered_groups["board"].scale = scale;
-        Render.rendered_groups["board"].translation.set(
-            (two.width  - ScaledBoardW) / 2,
-            (two.height - ScaledBoardH) / 2
-        );
+            two.update();
 
-        two.update();
+            debug.timeEnd("Resizing Board");
+        },
 
-        debug.timeEnd("Resizing Board");
+        colorProvince: function (provinceID, color) {
+            rendered_objects.board.provinces[provinceID].Primitive.path.fill = color;
+            two.update();
+        }
+    };
+    this.ReRender = ReRender;
+
+    var rendered_objects = {};  // Tracks individual shapes
+    var rendered_groups = {};   // Tracks rendering groups
+
+    if (debug.on) {
+        // Exposes internal objects to the outside world
+        this.RENDERED_OBJECTS = rendered_objects;
+        this.RENDERED_GROUPS = rendered_groups;
     }
 
     this.init = function () {
         // ------ SHARED ASSETS ------ //
-        pallete = generatePallete(map.n_players);
+        pallete = Utils.generatePallete(map.n_players);
         pallete.unshift("white");
 
         // ---------- BOARD ---------- //
         debug.time("Rendering Board");
 
-        Render.rendered_objects["board"] = {};
+        rendered_objects["board"] = {};
 
         /* PROVINCES */
-        Render.rendered_objects.board["provinces"] = [];
+        rendered_objects.board["provinces"] = {};
         for (var id = 0; id < map.provinces.length; id++) {
             if (map.provinces[id].owner == 0) continue;
-            Render.rendered_objects.board.provinces.push( new GameObjects.Province({id:id}) );
+            rendered_objects.board.provinces[id] = new GameObjects.Province({id:id});
         }
 
         /* OUTLINE */
@@ -712,34 +725,36 @@ var Render = new function () {
         })
         // DIRTY FLOATING POINT PRECISION BULLSHIT
 
-        Render.rendered_objects.board["outline"] = new Primitives.Path({
+        rendered_objects.board["outline"] = new Primitives.Path({
             points: outlinePoints,
             noFill: true,
             linewidth: hexradius/10
         })
 
         /* Group rendered provinces into an easy to manage Two.Group */
-        Render.rendered_groups["board"] = two.makeGroup();
+        rendered_groups["board"] = two.makeGroup();
 
         // Add outline first
-        Render.rendered_groups["board"].add(Render.rendered_objects.board.outline.path);
+        rendered_groups["board"].add(rendered_objects.board.outline.path);
 
         // Add provinces
-        for (var i = 0; i < Render.rendered_objects.board.provinces.length; i++) {
-            Render.rendered_groups["board"].add(Render.rendered_objects.board.provinces[i].Primitives.path);
+        for (var province in rendered_objects.board.provinces) {
+            rendered_groups["board"].add(rendered_objects.board.provinces[province].Primitive.path);
         }
 
         /* Attach event handlers*/
-        window.onresize = this.resize;
+        two.bind("resize", ReRender.resize);
 
         debug.timeEnd("Rendering Board");
         
 
 
         // Render everyhting!
-        this.resize();
+        ReRender.resize();
     };
 };
+
+
 
 
 var map;
