@@ -9,40 +9,6 @@
 //          tiles - a array of {row:row, col:col} for each tile that is in the porvince
 //          bordering - a array of provinces that border this province
 
-function getHexesSurrounding(x, y) {
-    var surroundingHexes = [0,0,0,0,0,0];
-
-    var tilePos = 0;
-    // For the row above, at, and beneath the current tile
-    for (var dy = -1; dy <= 1; dy++) {
-        
-        // Which tiles need to be checked in a row depends on
-        // if the row is even or oddly numbered, or if the row
-        // being checked is the same row that the tile rests on
-
-        var dx_range = [];
-        if      (dy == 0)    dx_range = [-1, 1];  // Same Row as tile
-        else if (y % 2 == 1) dx_range = [ 0, 1];  // Row is an Odd Row
-        else if (y % 2 == 0) dx_range = [-1, 0];  // Row is an Even row
-        
-        // Fianlly, we can iterate through each of the tiles surrounding the tile
-        for (var dx = dx_range[0] ; dx <= dx_range[1] ; dx++, tilePos++) {
-            // Check if we are at the current tile
-            if (dy == 0 && dx == 0) { tilePos--; continue; } 
-
-            // Get that nice circular order
-            if (tilePos == 0 || tilePos == 1) surroundingHexes[tilePos] = [y + dy, x + dx];
-            if (tilePos == 3)                 surroundingHexes[2]       = [y + dy, x + dx];
-            if (tilePos == 5)                 surroundingHexes[3]       = [y + dy, x + dx];
-            if (tilePos == 4)                 surroundingHexes[4]       = [y + dy, x + dx];
-            if (tilePos == 2)                 surroundingHexes[5]       = [y + dy, x + dx];
-
-        }
-    }
-
-    return surroundingHexes;
-}
-
 function Map(dims, players, seed) {
     // --------------------- MAP INITIALIZATION --------------------- //
 
@@ -71,7 +37,7 @@ function Map(dims, players, seed) {
     var BUFFER = 2;
     var tiles = [];
 
-    debug.time("Begining initial map seeding");
+    console.time("Begining initial map seeding");
     for (var i = 0; i < (tileMap.dims.h*tileMap.dims.w) / ((players+1)*(BUFFER*BUFFER + BUFFER)); i++) {
         while (true){
             // pick a random point on the board
@@ -127,10 +93,10 @@ function Map(dims, players, seed) {
             }
         }
     }
-    debug.timeEnd("Begining initial map seeding");
+    console.timeEnd("Begining initial map seeding");
 
 
-    debug.time("Growth by Iteration");
+    console.time("Growth by Iteration");
 
     // grow seeds by iterating
     while (true) {
@@ -216,10 +182,10 @@ function Map(dims, players, seed) {
         }
         if (emptycount == 0) break;
     }
-    debug.timeEnd("Growth by Iteration");
+    console.timeEnd("Growth by Iteration");
 
     // find out what hexes belong to what provinces, and also which provinces border one another
-    debug.time("Enumerating Provinces");
+    console.time("Enumerating Provinces");
 
     for (var y = 0; y < tileMap.dims.h; y++) {
         for (var x = 0; x < tileMap.dims.w; x++) {
@@ -228,7 +194,36 @@ function Map(dims, players, seed) {
 
             provinces[curTile.province].tiles.push([x,y])
 
-            var surroundingHexes = getHexesSurrounding(x,y);
+            var surroundingHexes = [0,0,0,0,0,0];
+
+            var tilePos = 0;
+            // For the row above, at, and beneath the current tile
+            for (var dy = -1; dy <= 1; dy++) {
+                
+                // Which tiles need to be checked in a row depends on
+                // if the row is even or oddly numbered, or if the row
+                // being checked is the same row that the tile rests on
+
+                var dx_range = [];
+                if      (dy == 0)    dx_range = [-1, 1];  // Same Row as tile
+                else if (y % 2 == 1) dx_range = [ 0, 1];  // Row is an Odd Row
+                else if (y % 2 == 0) dx_range = [-1, 0];  // Row is an Even row
+                
+                // Fianlly, we can iterate through each of the tiles surrounding the tile
+                for (var dx = dx_range[0] ; dx <= dx_range[1] ; dx++, tilePos++) {
+                    // Check if we are at the current tile
+                    if (dy == 0 && dx == 0) { tilePos--; continue; } 
+
+                    // Get that nice circular order
+                    if (tilePos == 0 || tilePos == 1) surroundingHexes[tilePos] = [y + dy, x + dx];
+                    if (tilePos == 3)                 surroundingHexes[2]       = [y + dy, x + dx];
+                    if (tilePos == 5)                 surroundingHexes[3]       = [y + dy, x + dx];
+                    if (tilePos == 4)                 surroundingHexes[4]       = [y + dy, x + dx];
+                    if (tilePos == 2)                 surroundingHexes[5]       = [y + dy, x + dx];
+
+                }
+            }
+
             for (var side = 0; side < 6; side++) {
                 if (!surroundingHexes[side]) continue;
                 var y2 = surroundingHexes[side][0];
@@ -258,11 +253,11 @@ function Map(dims, players, seed) {
             };
         }
     }
-    debug.timeEnd("Enumerating Provinces");
+    console.timeEnd("Enumerating Provinces");
 
     // assign owners to each province making sure there is a continuous landmass
     // be warned. trash code ahead.
-    debug.time("Assigning province owners");
+    console.time("Assigning province owners");
 
     var totalProvinces = provinces.length;
 
@@ -302,12 +297,12 @@ function Map(dims, players, seed) {
         someProvince = seenProvinces[getRandomInt(0,seenProvinces.length-1)];
 
         // log % completion
-        // debug.log( Math.floor((seenProvinces.length / totalProvinces) / (2/3) * 100) );
+        // console.log( Math.floor((seenProvinces.length / totalProvinces) / (2/3) * 100) );
     }
-    debug.timeEnd("Assigning province owners");
+    console.timeEnd("Assigning province owners");
 
-    debug.log("\n");
-    debug.timeEnd("Total Map Generation Time");
+    console.log("\n");
+    console.timeEnd("Total Map Generation Time");
 
 
     // --------------------- MAP OBJECT CREATION --------------------- //
@@ -322,4 +317,37 @@ function Map(dims, players, seed) {
     // generated map
     this.provinces = provinces;
     this.tileMap = tileMap;
+}
+
+var Game = new function() {
+    var selectedProvinceID = -1;
+    
+    // DEBUG STUFF
+        this.GET_SELECTED_PROVINCE = function () { return selectedProvinceID; }
+
+    this.Input = {
+        province: {
+            clicked: function (clickedProvinceID) {
+                if (selectedProvinceID != clickedProvinceID) {
+                    // If selecting a province
+                    if (selectedProvinceID == -1) {
+                        selectedProvinceID = clickedProvinceID;
+                        Render.ReRender.province.color(clickedProvinceID, getRandomColor());
+                    }
+
+                    // If attacking...
+                }
+
+                // Deselect province if it's the same province is clicked twice
+                else if (selectedProvinceID == clickedProvinceID) {
+                    selectedProvinceID = -1;
+                    Render.ReRender.province.owner(clickedProvinceID, map.provinces[clickedProvinceID].owner);
+                }
+            }
+        }
+    }
+
+    function attack (attackerProvinceID, defenderProvinceID) {
+
+    }
 }
