@@ -4,6 +4,134 @@
 		"selected_items":
 		[
 			[
+				"player",
+				"players"
+			],
+			[
+				"outline",
+				"outlinePoints"
+			],
+			[
+				"renf",
+				"referenced"
+			],
+			[
+				"rendered",
+				"rendered_objects"
+			],
+			[
+				"Base",
+				"BaseBoardH"
+			],
+			[
+				"pro",
+				"province"
+			],
+			[
+				"He",
+				"HexH"
+			],
+			[
+				"hex",
+				"hexradius"
+			],
+			[
+				"rended",
+				"rendered_objects"
+			],
+			[
+				"get",
+				"getRandomColor"
+			],
+			[
+				"line",
+				"linewidth"
+			],
+			[
+				"me",
+				"metaData"
+			],
+			[
+				"tile",
+				"tileMap"
+			],
+			[
+				"x",
+				"x2"
+			],
+			[
+				"surr",
+				"surroundingHexes"
+			],
+			[
+				"sur",
+				"surroundingHexes"
+			],
+			[
+				"fo",
+				"forEachSurroundingHex"
+			],
+			[
+				"pr",
+				"province"
+			],
+			[
+				"provin",
+				"province_points"
+			],
+			[
+				"is",
+				"isBorderingOtherProvince"
+			],
+			[
+				"on",
+				"onclick"
+			],
+			[
+				"board",
+				"boardOffset"
+			],
+			[
+				"pol",
+				"Polygon"
+			],
+			[
+				"co",
+				"corners"
+			],
+			[
+				"p",
+				"province"
+			],
+			[
+				"an",
+				"anchoredPoints"
+			],
+			[
+				"po",
+				"points"
+			],
+			[
+				"some",
+				"something"
+			],
+			[
+				"init",
+				"initBoard"
+			],
+			[
+				"ta",
+				"TableRender"
+			],
+			[
+				"cell",
+				"cellData"
+			],
+			[
+				"cre",
+				"createTable"
+			],
+			[
 				"render",
 				"renderContainers"
 			],
@@ -28,20 +156,12 @@
 				"provinceColorByOwner"
 			],
 			[
-				"pr",
-				"provinces"
-			],
-			[
 				"str",
 				"strToLexNum"
 			],
 			[
 				"seen",
 				"seenProvinces"
-			],
-			[
-				"some",
-				"someBorderProvince"
 			],
 			[
 				"province",
@@ -66,10 +186,6 @@
 			[
 				"empty",
 				"emptyProvinces"
-			],
-			[
-				"get",
-				"getRandomInt"
 			],
 			[
 				"new",
@@ -124,20 +240,12 @@
 				"provinceOwner"
 			],
 			[
-				"tile",
-				"tileMap"
-			],
-			[
 				"provinceColor",
 				"provinceColorByColor"
 			],
 			[
 				"n",
 				"nProvinces"
-			],
-			[
-				"pro",
-				"province"
 			],
 			[
 				"ad",
@@ -170,10 +278,6 @@
 			[
 				"re",
 				"return"
-			],
-			[
-				"co",
-				"continue"
 			],
 			[
 				"set",
@@ -266,10 +370,6 @@
 			[
 				"gener",
 				"generateMap"
-			],
-			[
-				"hex",
-				"hexColor"
 			],
 			[
 				"ge",
@@ -414,74 +514,6 @@
 			[
 				"do",
 				"dollar"
-			],
-			[
-				"ide",
-				"ideal_box"
-			],
-			[
-				"for",
-				"for	For Loop"
-			],
-			[
-				"ideal",
-				"ideal_box"
-			],
-			[
-				"in",
-				"inArr"
-			],
-			[
-				"pre",
-				"prevNum"
-			],
-			[
-				"mo",
-				"day_in_month"
-			],
-			[
-				"da",
-				"day_in_month"
-			],
-			[
-				"day",
-				"dayOfYear"
-			],
-			[
-				"is",
-				"isPrime"
-			],
-			[
-				"icn",
-				"include"
-			],
-			[
-				"r",
-				"rstrip"
-			],
-			[
-				"std",
-				"stdin"
-			],
-			[
-				"wor",
-				"wordLen"
-			],
-			[
-				"siz",
-				"sizeof"
-			],
-			[
-				"p",
-				"putchar"
-			],
-			[
-				"inc",
-				"income"
-			],
-			[
-				"ite",
-				"item_no"
 			]
 		]
 	},
@@ -491,7 +523,15 @@
 			"file": "js/main.js",
 			"settings":
 			{
-				"buffer_size": 34196,
+				"buffer_size": 28123,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "index.html",
+			"settings":
+			{
+				"buffer_size": 972,
 				"line_ending": "Unix"
 			}
 		}
@@ -578,18 +618,23 @@
 	"expanded_folders":
 	[
 		"/home/danielprilik/GitHub/dicesiege",
+		"/home/danielprilik/GitHub/dicesiege/css",
 		"/home/danielprilik/GitHub/dicesiege/js",
-		"/home/danielprilik/GitHub/dicesiege/lib"
+		"/home/danielprilik/GitHub/dicesiege/libs"
 	],
 	"file_history":
 	[
-		"/home/danielprilik/GitHub/dicesiege/lib/raphael.min.js",
+		"/home/danielprilik/GitHub/dicesiege/libs/two.min.js",
+		"/home/danielprilik/Desktop/Sandbox/svghex.html",
+		"/home/danielprilik/Desktop/Sandbox/convexhullmagic",
+		"/home/danielprilik/GitHub/dicesiege/css/styles.css",
+		"/home/danielprilik/GitHub/dicesiege/index.html",
 		"/home/danielprilik/GitHub/dicesiege/js/main.js",
+		"/home/danielprilik/GitHub/dicesiege/lib/raphael.min.js",
 		"/home/danielprilik/.config/sublime-text-3/Packages/Default/Preferences.sublime-settings",
 		"/home/danielprilik/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
 		"/home/danielprilik/GitHub/dicesiege/dicesiege.sublime-workspace",
 		"/home/danielprilik/GitHub/dicesiege/dicesiege.sublime-project",
-		"/home/danielprilik/GitHub/dicesiege/index.html",
 		"/home/danielprilik/GitHub/dicesiege/main.js",
 		"/home/danielprilik/GitHub/dicesiege/raw_input.js",
 		"/home/danielprilik/GitHub/dicesiege/util.js",
@@ -706,15 +751,11 @@
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/1/hello.c",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/Lectures/1/test.txt",
 		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/hello.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/13.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/12.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/11.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/10.c",
-		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/9.c"
+		"/home/danielprilik/Dropbox/Coursework/1A/CS-137/problems/Chapter 7/13.c"
 	],
 	"find":
 	{
-		"height": 40.0
+		"height": 38.0
 	},
 	"find_in_files":
 	{
@@ -728,6 +769,52 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"Obser",
+			"Polygo",
+			"getHexesSurrounding",
+			"players",
+			"PLAYERS",
+			"getHexCorners",
+			"Primitive",
+			"Touchables",
+			"yc",
+			"everypoint",
+			"NewShape",
+			"hexradius",
+			"HexW",
+			"boardOffset",
+			"edges",
+			"metaData",
+			"points",
+			"p1",
+			".x",
+			"Path",
+			"map",
+			"map\n",
+			"getHexesSurrounding",
+			"surroundingHexes",
+			"forEachSurroundingHex",
+			"surroundingHexes",
+			"forEachSurroundingHex",
+			"dims",
+			"tilemap",
+			"borders",
+			"tileNo",
+			"dc",
+			"dr",
+			"onclick",
+			"palle",
+			"provinceID",
+			"provinces",
+			"row < dims.h",
+			"borderin",
+			"console.time",
+			"debug",
+			"generatePallete",
+			"this.tileMap",
+			"dims",
+			"this.provinces",
+			"uniq",
 			"renderprefs",
 			"provinceColorByOwner",
 			"provinceColorByColor",
@@ -809,53 +896,7 @@
 			"col",
 			"row",
 			"dx",
-			"Debug",
-			"dimensions",
-			"hexdims",
-			"hexDims",
-			"mapSizeX",
-			"map.height",
-			"map.width",
-			"mapStartY",
-			"mapStartX",
-			"mapWidthHexNo",
-			"mapHeightHexNo",
-			"curs",
-			"Cursor",
-			"canvas",
-			"canvas.",
-			"?:o",
-			"?:",
-			");",
-			"m",
-			"m=-m,",
-			");",
-			"o\"",
-			"if",
-			"s",
-			"p",
-			"$",
-			"z",
-			");",
-			"s",
-			"m",
-			"s",
-			"p",
-			"n",
-			"s",
-			"printf",
-			"sgn",
-			"num",
-			"f.d",
-			"f.n",
-			"nf",
-			"di",
-			"ni",
-			"nf",
-			"df",
-			"d",
-			"n",
-			"pop"
+			"Debug"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -863,6 +904,18 @@
 		"regex": false,
 		"replace_history":
 		[
+			"Primitives",
+			"GameObjects",
+			"Primitive",
+			"[1]",
+			"dx",
+			"debug.time",
+			"dy",
+			"dx",
+			"dy",
+			"debug.time",
+			"tileMap",
+			"provinces",
 			"col",
 			"row",
 			"map",
@@ -923,15 +976,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 34196,
+						"buffer_size": 28123,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								241,
-								241
+								25400,
+								25400
 							]
 						],
 						"settings":
@@ -941,10 +994,38 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 16104.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "index.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 972,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								500,
+								500
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
@@ -952,7 +1033,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 32.0
+		"height": 30.0
 	},
 	"input":
 	{
@@ -997,7 +1078,7 @@
 	"project": "dicesiege.sublime-project",
 	"replace":
 	{
-		"height": 60.0
+		"height": 56.0
 	},
 	"save_all_on_build": true,
 	"select_file":
