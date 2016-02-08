@@ -257,149 +257,13 @@ var Render = new function () {
             ];
 
             return corners;
+        },
+        getProvincePathFromID: function (provinceID) {
+            return r_objects.board.provinces[provinceID].Primitive.path;
         }
     }
 
-    /*
-        PUBLIC METHODS
-    */
-
-    // ---- RERENDERING METHODS ---- //
-    // NOTE: I initialize it with both `var` and with `this` so that I can use it
-    //       publically, while also not having to write this.ReRender everytime I
-    //       want to use one of these functions internally.
-    var ReRender = {
-        resize: function () {
-            console.time("Resizing Board");
-
-            // ---------------------- BOARD ---------------------- //
-            HexW = hexradius * Math.cos(Math.PI / 6);
-            HexH = hexradius * Math.sin(Math.PI / 6);
-
-            var BaseBoardW = (HexW * (map.tileMap.dims.w * 2 + 1) );
-            var BaseBoardH = (HexH * (map.tileMap.dims.h * 3    ) );
-
-            var scale = Math.min(
-                two.width  / BaseBoardW * 0.975,    // 0.975 is a nice padding value
-                two.height / BaseBoardH * 0.975
-            )
-
-            var ScaledBoardW = BaseBoardW * scale;
-            var ScaledBoardH = BaseBoardH * scale;
-
-            rendered_groups["board"].scale = scale;
-            rendered_groups["board"].translation.set(
-                (two.width  - ScaledBoardW) / 2,
-                (two.height - ScaledBoardH) / 2
-            );
-
-            two.update();
-
-            console.timeEnd("Resizing Board");
-        },
-        province: {
-            color: function (provinceID, color) {
-                rendered_objects.board.provinces[provinceID].Primitive.path.fill = color;
-                two.update();
-            },
-            owner: function (provinceID, owner) {
-                rendered_objects.board.provinces[provinceID].Primitive.path.fill = pallete[owner];
-                two.update();
-            }
-        }
-    };
-    this.ReRender = ReRender;
-
-    var rendered_objects = {};  // Tracks individual shapes
-    var rendered_groups = {};   // Tracks rendering groups
-
-    // DEBUG STUFF
-        // Exposes internal objects to the outside world
-        this.GET_RENDERED_OBJECTS = function () { return rendered_objects; }
-        this.GET_RENDERED_GROUPS  = function () { return rendered_groups;  }
-
-    this.init = function () {
-        // ------ SHARED ASSETS ------ //
-        pallete = Utils.generatePallete(map.n_players);
-        pallete.unshift("white");
-
-        // ---------- BOARD ---------- //
-        console.time("Rendering Board");
-
-        rendered_objects["board"] = {};
-
-        /* PROVINCES */
-        rendered_objects.board["provinces"] = {};
-        for (var id = 0; id < map.provinces.length; id++) {
-            if (map.provinces[id].owner == 0) continue;
-            rendered_objects.board.provinces[id] = new GameObjects.Province({id:id});
-        }
-
-        /* OUTLINE */
-        var outlinePoints = [];
-        for (var x = 0; x < map.tileMap.dims.w; x++) {
-            for (var y = 0; y < map.tileMap.dims.h; y++) {
-                // TODO: Add some if statement to skip internal tiles
-
-                // calculate coordinates of each corner
-                var corners = Utils.getHexCorners(x,y)
-
-                for (var corner in corners) {
-                    // DIRTY FLOATING POINT PRECISION BULLSHIT
-                            corners[corner][0] += 100;
-                            corners[corner][1] += 100;
-                    // DIRTY FLOATING POINT PRECISION BULLSHIT
-                    
-                    outlinePoints.push(corners[corner]);
-                }
-            }
-        }
-
-        // Magic. MAGIC. MAAAGGGGIIIICCCC
-        outlinePoints = hull(outlinePoints, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
-        outlinePoints = outlinePoints.slice(0,-1);
-        
-        // DIRTY FLOATING POINT PRECISION BULLSHIT
-        outlinePoints = outlinePoints.map(function (pt) {
-            return [
-                pt[0] - 100, 
-                pt[1] - 100
-            ];
-        })
-        // DIRTY FLOATING POINT PRECISION BULLSHIT
-
-        rendered_objects.board["outline"] = new Primitives.Path({
-            points: outlinePoints,
-            noFill: true,
-            linewidth: hexradius/10
-        })
-
-        /* Group rendered provinces into an easy to manage Two.Group */
-        rendered_groups["board"] = two.makeGroup();
-
-        // Add outline first
-        rendered_groups["board"].add(rendered_objects.board.outline.path);
-
-        // Add provinces
-        for (var province in rendered_objects.board.provinces) {
-            rendered_groups["board"].add(rendered_objects.board.provinces[province].Primitive.path);
-        }
-
-        /* Attach event handlers*/
-        two.bind("resize", ReRender.resize);
-
-        console.timeEnd("Rendering Board");
-        
-
-
-        // Render everyhting!
-        ReRender.resize();
-
-
-
-
-
-
+    function initPanAndZoom() {
         // This is magic. Bless whoever made ZUI
         zui = new ZUI(two);
         zui.addLimits(0.75, 8);
@@ -458,7 +322,7 @@ var Render = new function () {
             if(e.touches.length == 2) { scaling = true; }
         });
         $stage.addEventListener("touchmove", function(e) {
-            if (e.touches.length == 1) {
+            if (!scaling) {
                 if (prevX == -1 && prevY == -1) return;
 
                 zui.translateSurface(
@@ -493,7 +357,205 @@ var Render = new function () {
 
             if (scaling) scaling = false;
         });
+    }
 
+
+
+
+
+    var animationQueue = {};
+    two.bind("update", function(framecount){
+        for (var anim in animationQueue) {
+            animationQueue[anim](framecount);
+        };
+    }).play();
+
+
+
+    /*
+        PUBLIC METHODS
+    */
+
+    // ---- RERENDERING METHODS ---- //
+    // NOTE: I initialize it with both `var` and with `this` so that I can use it
+    //       publically, while also not having to write this.ReRender everytime I
+    //       want to use one of these functions internally.
+    var ReRender = {
+        resize: function () {
+            console.time("Resizing Board");
+
+            // ---------------------- BOARD ---------------------- //
+            HexW = hexradius * Math.cos(Math.PI / 6);
+            HexH = hexradius * Math.sin(Math.PI / 6);
+
+            var BaseBoardW = (HexW * (map.tileMap.dims.w * 2 + 1) );
+            var BaseBoardH = (HexH * (map.tileMap.dims.h * 3    ) );
+
+            var scale = Math.min(
+                two.width  / BaseBoardW * 0.975,    // 0.975 is a nice padding value
+                two.height / BaseBoardH * 0.975
+            )
+
+            var ScaledBoardW = BaseBoardW * scale;
+            var ScaledBoardH = BaseBoardH * scale;
+
+            r_groups["board"].scale = scale;
+            r_groups["board"].translation.set(
+                (two.width  - ScaledBoardW) / 2,
+                (two.height - ScaledBoardH) / 2
+            );
+
+            two.update();
+
+            console.timeEnd("Resizing Board");
+        },
+        province: {
+            color: function (provinceID, color) {
+                Utils.getProvincePathFromID(provinceID).fill = color;
+            },
+            owner: function (provinceID, owner) {
+                Utils.getProvincePathFromID(provinceID).fill = pallete[owner];
+            },
+            selected: function (provinceID, selected) {
+                if (selected) {
+                    var percent = 0;
+                    var goingUp = true;
+                    animationQueue[provinceID] = function(framecount){
+                        if (percent > 1) goingUp = false;
+                        if (percent < 0) goingUp = true;
+
+                        if (goingUp) percent += 0.05;
+                        else         percent -= 0.05;
+
+                        var provinceColorArray = hex2rgb(pallete[map.provinces[provinceID].owner]);
+
+                        var color1 = provinceColorArray.map(function(x){ return x += 50 });
+                        var color2 = provinceColorArray
+
+                        var fillColor = "rgb("+pickHex(color1, color2, percent).join()+")";
+
+                        ReRender.province.color(provinceID, fillColor);
+
+                    };
+                } else {
+                    delete animationQueue[provinceID];
+
+                    ReRender.province.owner(provinceID, map.provinces[provinceID].owner);
+                }
+
+
+                two.update();
+            }
+        }
+    };
+    this.ReRender = ReRender;
+
+    var r_objects = {};  // Tracks individual shapes
+    var r_groups = {};   // Tracks rendering groups
+
+    // DEBUG STUFF
+        // Exposes internal objects to the outside world
+        this.GET_RENDERED_OBJECTS = function () { return r_objects; }
+        this.GET_RENDERED_GROUPS  = function () { return r_groups;  }
+
+
+
+    this.init = function () {
+        // ------ SHARED ASSETS ------ //
+        pallete = Utils.generatePallete(map.n_players);
+        pallete.unshift("white");
+
+        // ---------- BOARD ---------- //
+        console.time("Rendering Board");
+
+        r_objects["board"] = {};
+
+        /* PROVINCES */
+        r_objects.board["provinces"] = {};
+        for (var id = 0; id < map.provinces.length; id++) {
+            if (map.provinces[id].owner == 0) continue;
+            r_objects.board.provinces[id] = new GameObjects.Province({id:id});
+        }
+
+        /* OUTLINE */
+        var outlinePoints = [];
+        for (var x = 0; x < map.tileMap.dims.w; x++) {
+            for (var y = 0; y < map.tileMap.dims.h; y++) {
+                // TODO: Add some if statement to skip internal tiles
+
+                // calculate coordinates of each corner
+                var corners = Utils.getHexCorners(x,y)
+
+                for (var corner in corners) {
+                    // DIRTY FLOATING POINT PRECISION BULLSHIT
+                            corners[corner][0] += 100;
+                            corners[corner][1] += 100;
+                    // DIRTY FLOATING POINT PRECISION BULLSHIT
+                    
+                    outlinePoints.push(corners[corner]);
+                }
+            }
+        }
+
+        // Magic. MAGIC. MAAAGGGGIIIICCCC
+        outlinePoints = hull(outlinePoints, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
+        outlinePoints = outlinePoints.slice(0,-1);
+        
+        // DIRTY FLOATING POINT PRECISION BULLSHIT
+        outlinePoints = outlinePoints.map(function (pt) {
+            return [
+                pt[0] - 100, 
+                pt[1] - 100
+            ];
+        })
+        // DIRTY FLOATING POINT PRECISION BULLSHIT
+
+        r_objects["board"]["outline"] = new Primitives.Path({
+            points: outlinePoints,
+            noFill: true,
+            linewidth: hexradius/10
+        })
+
+
+
+        /* z-ordering, the shitty way ^TM */
+        r_groups["foregrounds"] = {};
+        r_groups["backgrounds"] = {};
+
+        /* Board Rendering Group */
+        r_groups["board"] = two.makeGroup();
+
+        // Add outline first. This should always stay underneath everything
+        r_groups["board"]
+            .add(r_objects["board"]["outline"].path);
+
+        // Make a background level for the board
+        r_groups["backgrounds"]["board"] = two.makeGroup();
+        r_groups["board"]
+            .add(r_groups["backgrounds"]["board"]);
+        
+        // Add provinces
+        for (var province in r_objects["board"]["provinces"]) {
+            r_groups["board"]
+                .add(r_objects["board"]["provinces"][province].Primitive.path);
+        }
+
+        // Make a foreground level for the board
+        r_groups["foregrounds"]["board"] = two.makeGroup();
+        r_groups["board"]
+            .add(r_groups["foregrounds"]["board"]);
+
+
+
+        /* Attach event handlers*/
+        two.bind("resize", ReRender.resize);
+
+        console.timeEnd("Rendering Board");
+        
+        initPanAndZoom();
+
+        // Render everything!
+        ReRender.resize();
     };
 };
 

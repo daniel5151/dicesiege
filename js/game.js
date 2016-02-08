@@ -332,7 +332,7 @@ var Game = new function() {
                     // If selecting a province
                     if (selectedProvinceID == -1) {
                         selectedProvinceID = clickedProvinceID;
-                        Render.ReRender.province.color(clickedProvinceID, getRandomColor());
+                        Render.ReRender.province.selected(clickedProvinceID, true);
                     }
 
                     // If attacking...
@@ -341,7 +341,7 @@ var Game = new function() {
                 // Deselect province if it's the same province is clicked twice
                 else if (selectedProvinceID == clickedProvinceID) {
                     selectedProvinceID = -1;
-                    Render.ReRender.province.owner(clickedProvinceID, map.provinces[clickedProvinceID].owner);
+                    Render.ReRender.province.selected(clickedProvinceID, false);
                 }
             }
         }
