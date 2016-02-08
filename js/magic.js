@@ -20,6 +20,29 @@ function getRandomColor() {
     }
     return color;
 }
+function pickHex(color1, color2, weight) {
+    var p = weight;
+    var w = p * 2 - 1;
+    var w1 = (w/1+1) / 2;
+    var w2 = 1 - w1;
+    var rgb = [Math.round(color1[0] * w1 + color2[0] * w2),
+        Math.round(color1[1] * w1 + color2[1] * w2),
+        Math.round(color1[2] * w1 + color2[2] * w2)];
+    return rgb;
+}
+function hex2rgb(hex) {
+        // long version
+        r = hex.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+        if (r) {
+                return r.slice(1,4).map(function(x) { return parseInt(x, 16); });
+        }
+        // short version
+        r = hex.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/i);
+        if (r) {
+                return r.slice(1,4).map(function(x) { return 0x11 * parseInt(x, 16); });
+        }
+        return null;
+  }
 
 
 function uniq(a) {
