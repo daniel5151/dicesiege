@@ -31,7 +31,7 @@ function TableRender() {
 
 // But seriosuly tho, here is the acutal renderer
 
-var Render = new function () {
+var Renderer = function (Game) {
     /*
         PRIVATE METHODS
     */
@@ -152,7 +152,7 @@ var Render = new function () {
             this.provinceID = provinceID;
 
             // Label some important things
-            var province = map.provinces[provinceID];
+            var province = Game.Data.provinces[provinceID];
             var tiles    = province.tiles;
 
             // This is the end goal.
@@ -370,6 +370,8 @@ var Render = new function () {
         };
     }).play();
 
+    this.GET_ANIMATION_QUEUE = function() { return animationQueue };
+
 
 
     /*
@@ -388,8 +390,8 @@ var Render = new function () {
             HexW = hexradius * Math.cos(Math.PI / 6);
             HexH = hexradius * Math.sin(Math.PI / 6);
 
-            var BaseBoardW = (HexW * (map.tileMap.dims.w * 2 + 1) );
-            var BaseBoardH = (HexH * (map.tileMap.dims.h * 3    ) );
+            var BaseBoardW = (HexW * (Game.Data.dims.w * 2 + 1) );
+            var BaseBoardH = (HexH * (Game.Data.dims.h * 3    ) );
 
             var scale = Math.min(
                 two.width  / BaseBoardW * 0.975,    // 0.975 is a nice padding value
@@ -427,9 +429,11 @@ var Render = new function () {
                         if (goingUp) percent += 0.05;
                         else         percent -= 0.05;
 
-                        var provinceColorArray = hex2rgb(pallete[map.provinces[provinceID].owner]);
+                        var provinceColorArray = hex2rgb(pallete[Game.Data.provinces[provinceID].owner]);
 
-                        var color1 = provinceColorArray.map(function(x){ return x += 50 });
+                        var color1 = provinceColorArray.map(function(x){ 
+                            return x += (255-x)/3;
+                        });
                         var color2 = provinceColorArray
 
                         var fillColor = "rgb("+pickHex(color1, color2, percent).join()+")";
@@ -440,7 +444,7 @@ var Render = new function () {
                 } else {
                     delete animationQueue[provinceID];
 
-                    ReRender.province.owner(provinceID, map.provinces[provinceID].owner);
+                    ReRender.province.owner(provinceID, Game.Data.provinces[provinceID].owner);
                 }
 
 
@@ -462,7 +466,7 @@ var Render = new function () {
 
     this.init = function () {
         // ------ SHARED ASSETS ------ //
-        pallete = Utils.generatePallete(map.n_players);
+        pallete = Utils.generatePallete(Game.Data.n_players);
         pallete.unshift("white");
 
         // ---------- BOARD ---------- //
@@ -472,15 +476,15 @@ var Render = new function () {
 
         /* PROVINCES */
         r_objects.board["provinces"] = {};
-        for (var id = 0; id < map.provinces.length; id++) {
-            if (map.provinces[id].owner == 0) continue;
+        for (var id = 0; id < Game.Data.provinces.length; id++) {
+            if (Game.Data.provinces[id].owner == 0) continue;
             r_objects.board.provinces[id] = new GameObjects.Province({id:id});
         }
 
         /* OUTLINE */
         var outlinePoints = [];
-        for (var x = 0; x < map.tileMap.dims.w; x++) {
-            for (var y = 0; y < map.tileMap.dims.h; y++) {
+        for (var x = 0; x < Game.Data.dims.w; x++) {
+            for (var y = 0; y < Game.Data.dims.h; y++) {
                 // TODO: Add some if statement to skip internal tiles
 
                 // calculate coordinates of each corner
@@ -557,6 +561,11 @@ var Render = new function () {
         // Render everything!
         ReRender.resize();
     };
+
+
+
+
+    this.init();
 };
 
 var zui;

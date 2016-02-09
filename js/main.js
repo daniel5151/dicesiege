@@ -1,4 +1,5 @@
-var map;
+var Game;
+var Render;
 
 function init() {
     var SEED = new Date().getTime();
@@ -8,11 +9,14 @@ function init() {
     
     var BOARD_DIMENSIONS = {w:3*SCALE,h:2*SCALE};
 
-    // generate map
-    map = new Map(BOARD_DIMENSIONS,PLAYERS,SEED);
+    // Import / Generate game data
+    var GameData = new GenGameData(BOARD_DIMENSIONS,PLAYERS,SEED);
+
+    // Start the game
+    Game = new Game(GameData);
     
     // TableRender();
-    Render.init();
+    Render = new Renderer(Game);
 }
 
-window.onload = init;
+init();

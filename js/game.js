@@ -29,7 +29,6 @@ function Map(dims, players, seed) {
     var tileMap = Array.apply(null, Array(dims.h)).map(function(){
         return Array.apply(null, Array(dims.w)).map(Number.prototype.valueOf, -1)
     });
-    tileMap.dims = dims;
 
     // Randomly place seeds for provinces around
     // Yep. This may result in an infinite loop
@@ -38,11 +37,11 @@ function Map(dims, players, seed) {
     var tiles = [];
 
     console.time("Begining initial map seeding");
-    for (var i = 0; i < (tileMap.dims.h*tileMap.dims.w) / ((players+1)*(BUFFER*BUFFER + BUFFER)); i++) {
+    for (var i = 0; i < (dims.h*dims.w) / ((players+1)*(BUFFER*BUFFER + BUFFER)); i++) {
         while (true){
             // pick a random point on the board
-            var randomR = Math.round(random()*(tileMap.dims.h-1));
-            var randomC = Math.round(random()*(tileMap.dims.w-1));
+            var randomR = Math.round(random()*(dims.h-1));
+            var randomC = Math.round(random()*(dims.w-1));
 
             // check if we have visited this piece before, and if so, just continue
             var docontinue = false;
@@ -61,8 +60,8 @@ function Map(dims, players, seed) {
             for (var dr = -BUFFER; dr <= BUFFER; dr++) {
                 for (var dc = -BUFFER; dc <= BUFFER; dc++) {
                     // check boundary conditions
-                    if (randomR + dr < 0 || randomR + dr > tileMap.dims.h-1) continue;
-                    if (randomC + dc < 0 || randomC + dc > tileMap.dims.w-1) continue;
+                    if (randomR + dr < 0 || randomR + dr > dims.h-1) continue;
+                    if (randomC + dc < 0 || randomC + dc > dims.w-1) continue;
 
                     // if there is a tile that is non--1 around a piece, then there is an area conflict.
                     if (tileMap[randomR + dr][randomC + dc] !== -1) {
@@ -102,9 +101,9 @@ function Map(dims, players, seed) {
     while (true) {
         // clone map
         var oldmap = [];
-        for (var row = 0; row < tileMap.dims.h; row++) {
+        for (var row = 0; row < dims.h; row++) {
             oldmap.push([]);
-            for (var col = 0; col < tileMap.dims.w; col++) {
+            for (var col = 0; col < dims.w; col++) {
                 oldmap[row][col] = tileMap[row][col];
             }
         }
@@ -140,8 +139,8 @@ function Map(dims, players, seed) {
                     if (dr == 0 && dc == 0) continue;
 
                     // Check Out of Bounds
-                    if (row + dr < 0 || row + dr > tileMap.dims.h-1) continue;
-                    if (col + dc < 0 || col + dc > tileMap.dims.w-1) continue;
+                    if (row + dr < 0 || row + dr > dims.h-1) continue;
+                    if (col + dc < 0 || col + dc > dims.w-1) continue;
 
                     // for readability 
                     var oldAdjacentTile =  oldmap[row + dr][col + dc];
@@ -174,9 +173,9 @@ function Map(dims, players, seed) {
         }
 
         // check if there are any more provinces left to fill, and if not, break.
-        var emptycount = tileMap.dims.h*tileMap.dims.w;
-        for (var row = 0; row < tileMap.dims.h; row++) {
-            for (var col = 0; col < tileMap.dims.w; col++) {
+        var emptycount = dims.h*dims.w;
+        for (var row = 0; row < dims.h; row++) {
+            for (var col = 0; col < dims.w; col++) {
                 if (tileMap[row][col] !== -1) emptycount-=1;
             }
         }
@@ -187,8 +186,8 @@ function Map(dims, players, seed) {
     // find out what hexes belong to what provinces, and also which provinces border one another
     console.time("Enumerating Provinces");
 
-    for (var y = 0; y < tileMap.dims.h; y++) {
-        for (var x = 0; x < tileMap.dims.w; x++) {
+    for (var y = 0; y < dims.h; y++) {
+        for (var x = 0; x < dims.w; x++) {
             // for readability
             var curTile = tileMap[y][x];
 
@@ -231,8 +230,8 @@ function Map(dims, players, seed) {
 
                 // Check if the tile being referenced is on the outside of the board
                 var isOnEdgeOfBoard = (
-                    y2 < 0 || y2 > tileMap.dims.h-1 ||
-                    x2 < 0 || x2 > tileMap.dims.w-1
+                    y2 < 0 || y2 > dims.h-1 ||
+                    x2 < 0 || x2 > dims.w-1
                 );
                 if (!isOnEdgeOfBoard) {
                     // for readability
@@ -310,21 +309,42 @@ function Map(dims, players, seed) {
     // now that the map has been generated, actually give
     // this object the map properties
 
-    // given properties (for easy reference)
-    this.n_players = players;
-    this.seed = seed;
-
     // generated map
     this.provinces = provinces;
     this.tileMap = tileMap;
+    this.dims = dims;
 }
 
-var Game = new function() {
-    var selectedProvinceID = -1;
-    
+var GenGameData = function(BOARD_DIMENSIONS,PLAYERS,SEED) {
+    // Generate map!
+    var raw_map = new Map(BOARD_DIMENSIONS,PLAYERS,SEED);
+
+    this.n_players   = PLAYERS;
+    this.n_provinces = raw_map.provinces.length;
+
+    this.seed      = SEED;
+    this.dims      = raw_map.dims;
+    this.provinces = raw_map.provinces;
+    this.tileMap   = raw_map.tileMap.map(function(r){
+        return r.map(function(c){
+            return c.province;
+        })
+    });
+}
+
+var Game = function (GameData) {
+    this.Data = GameData;
+
+    // We store a move history, for loading, and (later to be implemented) replays
+    this.History = [];
+
+
+
+
     // DEBUG STUFF
         this.GET_SELECTED_PROVINCE = function () { return selectedProvinceID; }
 
+    var selectedProvinceID = -1;
     this.Input = {
         province: {
             clicked: function (clickedProvinceID) {
@@ -336,6 +356,7 @@ var Game = new function() {
                     }
 
                     // If attacking...
+
                 }
 
                 // Deselect province if it's the same province is clicked twice
