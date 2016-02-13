@@ -258,7 +258,7 @@ var Renderer = function (Game) {
 
             return corners;
         },
-        getProvincePathFromID: function (provinceID) {
+        getPathFromPID: function (provinceID) {
             return r_objects.board.provinces[provinceID].Primitive.path;
         }
     }
@@ -412,11 +412,13 @@ var Renderer = function (Game) {
             console.timeEnd("Resizing Board");
         },
         province: {
-            color: function (provinceID, color) {
-                Utils.getProvincePathFromID(provinceID).fill = color;
+            color: function (provinceID, color, suppressUpdate) {
+                Utils.getPathFromPID(provinceID).fill = color;
+                if (!suppressUpdate) two.update();
             },
-            owner: function (provinceID, owner) {
-                Utils.getProvincePathFromID(provinceID).fill = pallete[owner];
+            owner: function (provinceID, owner, suppressUpdate) {
+                Utils.getPathFromPID(provinceID).fill = pallete[owner];
+                if (!suppressUpdate) two.update();
             },
             selected: function (provinceID, selected) {
                 if (selected) {
@@ -431,20 +433,17 @@ var Renderer = function (Game) {
 
                         var provinceColorArray = hex2rgb(pallete[Game.Data.provinces[provinceID].owner]);
 
-                        var color1 = provinceColorArray.map(function(x){ 
-                            return x += (255-x)/3;
-                        });
+                        var color1 = provinceColorArray.map(function(x){ return x += (255-x)/3; });
                         var color2 = provinceColorArray
 
                         var fillColor = "rgb("+pickHex(color1, color2, percent).join()+")";
 
-                        ReRender.province.color(provinceID, fillColor);
-
+                        ReRender.province.color(provinceID, fillColor, true);
                     };
                 } else {
                     delete animationQueue[provinceID];
 
-                    ReRender.province.owner(provinceID, Game.Data.provinces[provinceID].owner);
+                    ReRender.province.owner(provinceID, Game.Data.provinces[provinceID].owner, true);
                 }
 
 
