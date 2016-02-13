@@ -257,6 +257,7 @@ function Map(dims, players, seed) {
     // assign owners to each province making sure there is a continuous landmass
     // be warned. trash code ahead.
     console.time("Assigning province owners");
+    var MAX_ITER = 100000;
 
     var totalProvinces = provinces.length;
 
@@ -266,6 +267,7 @@ function Map(dims, players, seed) {
 
     var seenProvinces = [someProvince]; // add that province to the list of seen provinces
     while (seenProvinces.length < totalProvinces*2/3) { // we want to fill up 2/3 of the board
+        if (!MAX_ITER--) exit();
         // get a list of all provinces bordering the currecnt province
         var currentBorderProvinces = provinces[someProvince].bordering;
 
@@ -320,12 +322,23 @@ var GenGameData = function(BOARD_DIMENSIONS,PLAYERS,SEED) {
     var raw_map = new Map(BOARD_DIMENSIONS,PLAYERS,SEED);
 
     this.n_players   = PLAYERS;
-    this.n_provinces = raw_map.provinces.length;
 
     this.seed      = SEED;
     this.dims      = raw_map.dims;
-    this.provinces = raw_map.provinces;
-    this.tileMap   = raw_map.tileMap.map(function(r){
+
+    this.provinces   = raw_map.provinces;
+    this.n_provinces = raw_map.provinces.length;
+
+        // Might come in handly later?
+    // var ownedProvinceIDs = [];
+    // this.provinces.forEach(function(e,i,a){
+    //     if (e.owner !== 0) ownedProvinceIDs.push(i);
+    // })
+
+    // this.ownedProvinces   = ownedProvinceIDs;
+    // this.n_ownedProvinces = ownedProvinceIDs.length;
+
+    this.tileMap = raw_map.tileMap.map(function(r){
         return r.map(function(c){
             return c.province;
         })
@@ -339,36 +352,84 @@ var Game = function (GameData) {
     this.History = [];
 
 
-
+    var Utils = {
+        provinceFromPID: function (PID) {
+            return Game.Data.provinces[PID];
+        } 
+    }
 
     // DEBUG STUFF
-        this.GET_SELECTED_PROVINCE = function () { return selectedProvinceID; }
+        this.GET_SELECTED_PROVINCE = function () { return selectedPID; }
 
-    var selectedProvinceID = -1;
+    var selectedPID = null;
     this.Input = {
         province: {
-            clicked: function (clickedProvinceID) {
-                if (selectedProvinceID != clickedProvinceID) {
+            clicked: function (clickedPID) {
+                if (selectedPID != clickedPID) {
                     // If selecting a province
-                    if (selectedProvinceID == -1) {
-                        selectedProvinceID = clickedProvinceID;
-                        Render.ReRender.province.selected(clickedProvinceID, true);
+                    if (selectedPID == null) {
+                        selectedPID = clickedPID;
+                        Render.ReRender.province.selected(clickedPID, true);
                     }
 
                     // If attacking...
+                    else {
+                        // First, we should check if user is aiming at himself
+                        if (Utils.provinceFromPID(selectedPID).owner == Utils.provinceFromPID(clickedPID).owner) return;
 
+                        // Check if there is a border b/w the two
+                        var isBorder = Utils.provinceFromPID(selectedPID).bordering.some(function(borderPID){
+                            return borderPID == clickedPID;
+                        });
+
+                        if (isBorder) Moves.attack(selectedPID, clickedPID);
+                    }
                 }
 
                 // Deselect province if it's the same province is clicked twice
-                else if (selectedProvinceID == clickedProvinceID) {
-                    selectedProvinceID = -1;
-                    Render.ReRender.province.selected(clickedProvinceID, false);
+                else if (selectedPID == clickedPID) {
+                    selectedPID = null;
+                    Render.ReRender.province.selected(clickedPID, false);
                 }
             }
         }
     }
 
-    function attack (attackerProvinceID, defenderProvinceID) {
+    var Moves = {
+        attack:function (attackPID, defendPID) {
+            // what we should be doing is checking the number of soldiers each
+            // person has stationed at the province, but becuase I am lazy,
+            // I'm not going to implement that now, and instead, outcomes
+            // will be randomly chosen by dice roll
 
+            var RandomNum = 4 // Decided fairly by Dice Roll
+
+            var success = !!Math.floor(RandomNum*10) % 2;
+
+            if (success) {
+                // Defender loses all soldiers stationed in that province
+                    // Code
+                // Transfer ownership of the province to attacker
+                Utils.provinceFromPID(defendPID).owner = Utils.provinceFromPID(attackPID).owner;
+
+                // Attacker moves all soldiers except one to the new province
+                    // Code
+                // One attacker soldier is left behind.
+                    // Code
+
+                // Rerender the two provinces
+                    // Province one rerender
+                Render.ReRender.province.owner(defendPID, Utils.provinceFromPID(defendPID).owner);
+            } else {
+                // Attacker loses all soldiers except one in his province
+                    // Code
+                // Rerender
+                    // Code
+            }
+
+            // Deselect the attacker
+            Render.ReRender.province.selected(attackPID, false);
+            selectedPID = null;
+        }
     }
 }
