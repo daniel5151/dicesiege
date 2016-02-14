@@ -9,7 +9,7 @@ function TableRender() {
     var table = document.createElement('table')
     var tableBody = document.createElement('tbody');
 
-    map.tileMap.forEach(function(rowData) {
+    map.ownerByHexMap.forEach(function(rowData) {
         var row = document.createElement('tr');
 
         rowData.forEach(function(cellData) {
@@ -502,8 +502,7 @@ var Renderer = function (Game) {
 
         /* PROVINCES */
         r_objects.board["provinces"] = {};
-        for (var id = 0; id < Game.Data.provinces.length; id++) {
-            if (Game.Data.provinces[id].owner == 0) continue;
+        for (var id in Game.Data.provinces) {
             r_objects.board.provinces[id] = new GameObjects.Province({id:id});
         }
 

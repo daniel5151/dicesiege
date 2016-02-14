@@ -1,7 +1,7 @@
 // What properties should this map have?
 // -------------------------------------
 // dims - object with w and h
-// tileMap - 2d array with each object being a object containing
+// ownerByHexMap - 2d array with each object being a object containing
 //      owner of the province
 //      province it belongs to
 // provinces - object with subproperties pertaining to each province                      
@@ -26,7 +26,7 @@ function Map(dims, players, seed) {
     seedRandom( (parseFloat(seed) == seed)?parseFloat(seed):strToLexNum(seed) );
 
     // Generate array of -1
-    var tileMap = Array.apply(null, Array(dims.h)).map(function(){
+    var ownerByHexMap = Array.apply(null, Array(dims.h)).map(function(){
         return Array.apply(null, Array(dims.w)).map(Number.prototype.valueOf, -1)
     });
 
@@ -34,7 +34,7 @@ function Map(dims, players, seed) {
     // Yep. This may result in an infinite loop
     // YOLO
     var BUFFER = 2;
-    var tiles = [];
+    var assignedTiles = [];
 
     console.time("Begining initial map seeding");
     for (var i = 0; i < (dims.h*dims.w) / ((players+1)*(BUFFER*BUFFER + BUFFER)); i++) {
@@ -45,8 +45,8 @@ function Map(dims, players, seed) {
 
             // check if we have visited this piece before, and if so, just continue
             var docontinue = false;
-            for (var tile = 0; tile < tiles.length; tile++) {
-                if (tiles[tile].row == randomR && tiles[tile].col === randomC) {
+            for (var tile = 0; tile < assignedTiles.length; tile++) {
+                if (assignedTiles[tile].row == randomR && assignedTiles[tile].col === randomC) {
                     docontinue = true;
                     break;
                 }
@@ -64,7 +64,7 @@ function Map(dims, players, seed) {
                     if (randomC + dc < 0 || randomC + dc > dims.w-1) continue;
 
                     // if there is a tile that is non--1 around a piece, then there is an area conflict.
-                    if (tileMap[randomR + dr][randomC + dc] !== -1) {
+                    if (ownerByHexMap[randomR + dr][randomC + dc] !== -1) {
                         areaconflict = true;
                         break;
                     }
@@ -73,18 +73,18 @@ function Map(dims, players, seed) {
             }
 
             if (!areaconflict) {
-                tileMap[randomR][randomC] = {
-                    owner:0,                            // we assign owners later on
-                    province: provinceID++
-                };
+                ownerByHexMap[randomR][randomC] = provinceID;
 
                 provinces.push({
                     tiles:[[randomC,randomR]],
                     bordering:[],
-                    owner:0        // updated later 
+                    owner:0,        // updated later
+                    id:provinceID
                 });
 
-                tiles.push({
+                provinceID++;
+
+                assignedTiles.push({
                     row:randomR,
                     col:randomC
                 });
@@ -104,19 +104,18 @@ function Map(dims, players, seed) {
         for (var row = 0; row < dims.h; row++) {
             oldmap.push([]);
             for (var col = 0; col < dims.w; col++) {
-                oldmap[row][col] = tileMap[row][col];
+                oldmap[row][col] = ownerByHexMap[row][col];
             }
         }
 
         // iterate through all tiles until we run out of tiles to fill
-        var currtiles = tiles.length;
+        var currtiles = assignedTiles.length;
         for (var i = 0; i < currtiles; i++) {
-            if (tiles[i] == 0) continue;
+            if (assignedTiles[i] == 0) continue;
 
             // for readability
-            var row = tiles[i].row;
-            var col = tiles[i].col;
-            var currTile = tileMap[row][col];
+            var row = assignedTiles[i].row;
+            var col = assignedTiles[i].col;
 
             // we want to keep track of how many empty tiles the tile is bordering
             // because if we have no empty borders, then we should stop iterating
@@ -144,19 +143,15 @@ function Map(dims, players, seed) {
 
                     // for readability 
                     var oldAdjacentTile =  oldmap[row + dr][col + dc];
-                    var newAdjacentTile = tileMap[row + dr][col + dc];
 
                     // if the surrounding tile is empty, and a tile is lucky,
                     // then the tile gets some more land
                     if (oldAdjacentTile === -1 && random() < 0.25) {
                         // give land to that adjacent hex
-                        tileMap[row + dr][col + dc] = {
-                            owner: 0,
-                            province: tileMap[row][col].province
-                        };
+                        ownerByHexMap[row + dr][col + dc] = ownerByHexMap[row][col]
                         
                         // push to internal tile array, as we now iterate through this tile too
-                        tiles.push({
+                        assignedTiles.push({
                             row:row + dr,
                             col:col + dc
                         });
@@ -168,7 +163,7 @@ function Map(dims, players, seed) {
             }
             // we can remove the tile from the iteration queue if it cannot grow any more
             if (numNonEmptyBordering >= 6) {
-                tiles[i] == 0;
+                assignedTiles[i] == 0;
             }
         }
 
@@ -176,7 +171,7 @@ function Map(dims, players, seed) {
         var emptycount = dims.h*dims.w;
         for (var row = 0; row < dims.h; row++) {
             for (var col = 0; col < dims.w; col++) {
-                if (tileMap[row][col] !== -1) emptycount-=1;
+                if (ownerByHexMap[row][col] !== -1) emptycount-=1;
             }
         }
         if (emptycount == 0) break;
@@ -189,9 +184,9 @@ function Map(dims, players, seed) {
     for (var y = 0; y < dims.h; y++) {
         for (var x = 0; x < dims.w; x++) {
             // for readability
-            var curTile = tileMap[y][x];
+            var curTileOwner = ownerByHexMap[y][x];
 
-            provinces[curTile.province].tiles.push([x,y])
+            provinces[curTileOwner].tiles.push([x,y])
 
             var surroundingHexes = [0,0,0,0,0,0];
 
@@ -235,17 +230,17 @@ function Map(dims, players, seed) {
                 );
                 if (!isOnEdgeOfBoard) {
                     // for readability
-                    var adjTile = tileMap[y2][x2];
+                    var adjTileOwner = ownerByHexMap[y2][x2];
 
-                    if (adjTile.province !== curTile.province) {
-                        provinces[curTile.province].bordering.push(adjTile.province);
-                        provinces[adjTile.province].bordering.push(curTile.province);
+                    if (adjTileOwner !== curTileOwner) {
+                        provinces[curTileOwner].bordering.push(adjTileOwner);
+                        provinces[adjTileOwner].bordering.push(curTileOwner);
 
-                        provinces[curTile.province].bordering = uniq(
-                            provinces[curTile.province].bordering
+                        provinces[curTileOwner].bordering = uniq(
+                            provinces[curTileOwner].bordering
                         );
-                        provinces[adjTile.province].bordering = uniq(
-                            provinces[adjTile.province].bordering
+                        provinces[adjTileOwner].bordering = uniq(
+                            provinces[adjTileOwner].bordering
                         );
                     }
                 }
@@ -289,7 +284,6 @@ function Map(dims, players, seed) {
                 for (var tile = 0; tile < provinces[someBorderProvince].tiles.length; tile++) {
                     var row = provinces[someBorderProvince].tiles[tile][1];
                     var col = provinces[someBorderProvince].tiles[tile][0];
-                    tileMap[row][col].owner = provinces[someBorderProvince].owner;
                 }
             }
         }
@@ -302,6 +296,24 @@ function Map(dims, players, seed) {
     }
     console.timeEnd("Assigning province owners");
 
+    console.time("Creating list of provinces Object");
+
+    var provinces_obj = {};
+
+    provinces.forEach(function(province){
+        // Remove any borderPID's that belong to provinces that have no owner
+        province.bordering = province.bordering.filter(function(borderPID){
+            return !(provinces[borderPID].owner == 0)
+        })
+
+        // Discard provinces that are not owned by anyone
+        if (province.owner !== 0) provinces_obj[province.id] = province;
+    })
+
+    console.timeEnd("Creating list of provinces Object");
+
+
+
     console.log("\n");
     console.timeEnd("Total Map Generation Time");
 
@@ -312,8 +324,8 @@ function Map(dims, players, seed) {
     // this object the map properties
 
     // generated map
-    this.provinces = provinces;
-    this.tileMap = tileMap;
+    this.provinces = provinces_obj;
+    this.ownerByHexMap = ownerByHexMap;
     this.dims = dims;
 }
 
@@ -323,26 +335,12 @@ var GenGameData = function(BOARD_DIMENSIONS,PLAYERS,SEED) {
 
     this.n_players   = PLAYERS;
 
-    this.seed      = SEED;
-    this.dims      = raw_map.dims;
+    this.seed        = SEED;
+    this.dims        = raw_map.dims;
 
-    this.provinces   = raw_map.provinces;
-    this.n_provinces = raw_map.provinces.length;
+    this.provinces = raw_map.provinces;
 
-        // Might come in handly later?
-    // var ownedProvinceIDs = [];
-    // this.provinces.forEach(function(e,i,a){
-    //     if (e.owner !== 0) ownedProvinceIDs.push(i);
-    // })
-
-    // this.ownedProvinces   = ownedProvinceIDs;
-    // this.n_ownedProvinces = ownedProvinceIDs.length;
-
-    this.tileMap = raw_map.tileMap.map(function(r){
-        return r.map(function(c){
-            return c.province;
-        })
-    });
+    this.ownerByHexMap = raw_map.ownerByHexMap;
 }
 
 var Game = function (GameData) {
@@ -368,6 +366,13 @@ var Game = function (GameData) {
                 if (selectedPID != clickedPID) {
                     // If selecting a province
                     if (selectedPID == null) {
+                        // Let's sanity check and see if the province can even be selected for an attack:
+                        var notSelectable = Utils.provinceFromPID(clickedPID).bordering.every(function(borderPID){
+                            return Utils.provinceFromPID(borderPID).owner === Utils.provinceFromPID(clickedPID).owner;
+                        });
+
+                        if (notSelectable) return;
+
                         selectedPID = clickedPID;
                         Render.ReRender.province.selected(clickedPID, true);
                     }
