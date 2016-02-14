@@ -341,18 +341,28 @@ var GenGameData = function(BOARD_DIMENSIONS,PLAYERS,SEED) {
     this.provinces = raw_map.provinces;
 
     this.ownerByHexMap = raw_map.ownerByHexMap;
+
+    this.History = [];
 }
 
 var Game = function (GameData) {
+    var thisGame = this;
+
     this.Data = GameData;
 
-    // We store a move history, for loading, and (later to be implemented) replays
-    this.History = [];
-
+    // We store a move history, both for loading, and also for (later to be implemented) replays
+    var History = {
+        addEvent:function(eventType, data) {
+            thisGame.Data.History.push({
+                event: eventType,
+                data: data
+            })
+        }
+    }
 
     var Utils = {
         provinceFromPID: function (PID) {
-            return Game.Data.provinces[PID];
+            return thisGame.Data.provinces[PID];
         } 
     }
 
@@ -425,6 +435,14 @@ var Game = function (GameData) {
                 // Rerender the two provinces
                     // Province one rerender
                 Render.ReRender.province.owner(defendPID, Utils.provinceFromPID(defendPID).owner);
+
+                // Record history
+                History.addEvent("attack_success",{
+                    attackPID: attackPID,
+                    defendPID: defendPID,
+                    attacker: Utils.provinceFromPID(attackPID).owner,
+                    defender: Utils.provinceFromPID(defendPID).owner
+                })
             } else {
                 // Attacker loses all soldiers except one in his province
                     // Code
