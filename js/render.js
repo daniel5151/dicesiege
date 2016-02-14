@@ -81,12 +81,6 @@ var Renderer = function (Game) {
 
             two.update();
 
-            circle.onclick = function (f) {
-                if (two.type !== Two.Types.svg) return;
-                this._renderer.elem.addEventListener('click', f);
-            }
-
-
             return circle;
         },
         Rect:function() {
@@ -135,11 +129,10 @@ var Renderer = function (Game) {
             two.update();
 
             var self = this;
-            this.onclick = function (f) {
+            this.addEventListener = function (event, f, preventDefault) {
                 if (two.type !== Two.Types.svg) return;
-                self.path._renderer.elem.addEventListener('click', function (e) {
-                    f(e,self);
-                });
+
+                self.path._renderer.elem.addEventListener(event, f, preventDefault);
             }
         }
     };
@@ -181,7 +174,7 @@ var Renderer = function (Game) {
                     // new Primitives.Path({
                     //     points:corners,
                     //     fill:pallete[province.owner+1]
-                    // }).onclick(function(e){
+                    // }).addEventListener(function(e){
                     //     console.log(self.provinceID)
                     // });
                 //Shit tier rendering 4 da testing b0ss
@@ -208,9 +201,9 @@ var Renderer = function (Game) {
             })
 
             var self = this;
-            this.Primitive.onclick(function(e,primitive){
-                Game.Input.province.clicked(provinceID);
-            });
+            this.addEventListener = function(event, f, preventDefault) {
+                self.Primitive.addEventListener(event, f, preventDefault);
+            }
         }
     }
 
@@ -262,105 +255,6 @@ var Renderer = function (Game) {
             return r_objects.board.provinces[provinceID].Primitive.path;
         }
     }
-
-    function initPanAndZoom() {
-        // This is magic. Bless whoever made ZUI
-        zui = new ZUI(two);
-        zui.addLimits(0.75, 8);
-
-        // TODO: Add pinch-to-zoom for mobile.
-
-        // Zooming
-        var $stage = two.renderer.domElement;
-        function MouseWheelHandler (e) {
-            e.stopPropagation();
-            e.preventDefault();
-
-            var dy = (e.wheelDeltaY || - e.deltaY) / 1000;
-
-            zui.zoomBy(dy, e.clientX, e.clientY);
-
-            two.update()
-
-            return false;
-        }
-        $stage.addEventListener("mousewheel", MouseWheelHandler, false);
-        $stage.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
-
-        var prevX = -1;
-        var prevY = -1;
-        var scaling = false;
-
-        $stage.addEventListener("mousedown", function(e) {
-            prevX = e.pageX;
-            prevY = e.pageY;
-        });
-        $stage.addEventListener("mousemove", function(e) {
-            if (prevX == -1 && prevY == -1) return;
-
-            zui.translateSurface(
-                -(prevX - e.pageX),
-                -(prevY - e.pageY)
-            )
-
-            prevX = e.pageX;
-            prevY = e.pageY;
-
-            // Why? Dunno. But it fixes things.
-            zui.zoomBy( ((Math.random()>0.5)?0.000000001:-0.000000001), e.clientX, e.clientY);
-            two.update();
-        });
-        $stage.addEventListener("mouseup", function(e) {
-            prevX = -1;
-            prevY = -1;
-        });
-
-        $stage.addEventListener("touchstart", function(e) {
-            prevX = e.targetTouches[0].pageX;
-            prevY = e.targetTouches[0].pageY;
-
-            if(e.touches.length == 2) { scaling = true; }
-        });
-        $stage.addEventListener("touchmove", function(e) {
-            if (!scaling) {
-                if (prevX == -1 && prevY == -1) return;
-
-                zui.translateSurface(
-                    -(prevX - e.targetTouches[0].pageX),
-                    -(prevY - e.targetTouches[0].pageY)
-                )
-
-                prevX = e.targetTouches[0].pageX;
-                prevY = e.targetTouches[0].pageY;
-
-                // Why? Dunno. But it fixes things.
-                zui.zoomBy( ((Math.random()>0.5)?0.000000001:-0.000000001), 0,0);
-                two.update();
-            }
-
-            if (scaling && e.touches.length == 2) {
-                var newDist = (Math.sqrt(
-                    (e.touches[0].pageX-e.touches[1].pageX) * (e.touches[0].pageX-e.touches[1].pageX) +
-                    (e.touches[0].pageY-e.touches[1].pageY) * (e.touches[0].pageY-e.touches[1].pageY))
-                );
-
-                // prevDist = newDist;
-
-                zui.zoomSet(newDist/100, e.touches[0].clientX, e.touches[0].clientY);
-
-                two.update()
-            }
-        });
-        $stage.addEventListener("touchend", function(e) {
-            prevX = -1;
-            prevY = -1;
-
-            if (scaling) scaling = false;
-        });
-    }
-
-
-
 
 
     var animationQueue = {};
@@ -463,6 +357,139 @@ var Renderer = function (Game) {
 
 
 
+    function initEventHandlers() {
+        two.bind("resize", ReRender.resize);
+
+        /*
+            ZOOMING AND PANNING
+        */
+
+        // This is magic. Bless whoever made ZUI
+        zui = new ZUI(two);
+        zui.addLimits(0.75, 8);
+
+        // Useful label
+        var $stage = two.renderer.domElement;
+
+        // Key Variables
+        var prevX = -1;
+        var prevY = -1;
+
+        var clickNoDrag = false;
+
+        var scaling = false;
+
+        // ---------- MOUSE ---------- // 
+        function MouseWheelHandler (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            var dy = (e.wheelDeltaY || - e.deltaY) / 1000;
+
+            zui.zoomBy(dy, e.clientX, e.clientY);
+
+            two.update()
+
+            return false;
+        }
+        $stage.addEventListener("mousewheel", MouseWheelHandler, false);
+        $stage.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
+
+        $stage.addEventListener("mousedown", function(e) {
+            prevX = e.pageX;
+            prevY = e.pageY;
+
+            clickNoDrag = true;
+        });
+        $stage.addEventListener("mousemove", function(e) {
+            if (prevX == -1 && prevY == -1) return;
+
+            clickNoDrag = false;
+
+            zui.translateSurface(
+                -(prevX - e.pageX),
+                -(prevY - e.pageY)
+            )
+
+            prevX = e.pageX;
+            prevY = e.pageY;
+
+            // Why? Dunno. But it fixes things.
+            zui.zoomBy( ((Math.random()>0.5)?0.000000001:-0.000000001), e.clientX, e.clientY);
+            two.update();
+        });
+        $stage.addEventListener("mouseup", function(e) {
+            prevX = -1;
+            prevY = -1;
+        });
+
+
+
+        // ---------- TOUCH ---------- // 
+        $stage.addEventListener("touchstart", function(e) {
+            prevX = e.targetTouches[0].pageX;
+            prevY = e.targetTouches[0].pageY;
+
+            if(e.touches.length == 2) { scaling = true; }
+
+            clickNoDrag = true;
+        });
+        $stage.addEventListener("touchmove", function(e) {
+            if (!scaling) {
+                if (prevX == -1 && prevY == -1) return;
+
+                clickNoDrag = false;
+
+                zui.translateSurface(
+                    -(prevX - e.targetTouches[0].pageX),
+                    -(prevY - e.targetTouches[0].pageY)
+                )
+
+                prevX = e.targetTouches[0].pageX;
+                prevY = e.targetTouches[0].pageY;
+
+                // Why? Dunno. But it fixes things.
+                zui.zoomBy( ((Math.random()>0.5)?0.000000001:-0.000000001), 0,0);
+                two.update();
+            }
+
+            if (scaling && e.touches.length == 2) {
+                var newDist = (Math.sqrt(
+                    (e.touches[0].pageX-e.touches[1].pageX) * (e.touches[0].pageX-e.touches[1].pageX) +
+                    (e.touches[0].pageY-e.touches[1].pageY) * (e.touches[0].pageY-e.touches[1].pageY))
+                );
+
+                // prevDist = newDist;
+
+                zui.zoomSet(newDist/100, e.touches[0].clientX, e.touches[0].clientY);
+
+                two.update()
+            }
+        });
+        $stage.addEventListener("touchend", function(e) {
+            prevX = -1;
+            prevY = -1;
+
+            if (scaling) scaling = false;
+        });
+
+
+        /*
+            PROVINCES
+        */
+
+        for (var province in r_objects["board"]["provinces"]) {
+            (function(province_obj){
+                province_obj.addEventListener("click", function(e){
+                    if (clickNoDrag) Game.Input.province.clicked(province_obj.provinceID);
+                })
+            })(r_objects["board"]["provinces"][province])
+        }
+
+
+
+    }
+
     this.init = function () {
         // ------ SHARED ASSETS ------ //
         pallete = Utils.generatePallete(Game.Data.n_players);
@@ -548,20 +575,14 @@ var Renderer = function (Game) {
         r_groups["board"]
             .add(r_groups["foregrounds"]["board"]);
 
-
-
-        /* Attach event handlers*/
-        two.bind("resize", ReRender.resize);
-
         console.timeEnd("Rendering Board");
         
-        initPanAndZoom();
+        // Attach event handlers
+        initEventHandlers();
 
         // Render everything!
         ReRender.resize();
     };
-
-
 
 
     this.init();
