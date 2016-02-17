@@ -38,6 +38,15 @@ var Renderer = function (Game) {
 
     // ---- ESSENTIAL ELEMENTS ---- //
     var elem = document.getElementById('board');
+
+    var ui = new Two({
+        fullscreen:true,
+        // type:Two.Types.webgl,
+        // type:Two.Types.canvas,
+        // width: 285,
+        // height: 200
+    }).appendTo(elem);
+
     var two = new Two({
         fullscreen:true,
         // type:Two.Types.webgl,
@@ -45,6 +54,8 @@ var Renderer = function (Game) {
         // width: 285,
         // height: 200
     }).appendTo(elem);
+
+
 
     // ---- SHARED ASSETS ---- //
     var pallete;
@@ -64,7 +75,7 @@ var Renderer = function (Game) {
 
     // PRIMITIVES
     var Primitives = {
-        Circle:function(props){
+        Circle:function(two, props){
             var x         = props.x         || 10;
             var y         = props.y         || 10;
             var r         = props.r         || 10;
@@ -83,7 +94,7 @@ var Renderer = function (Game) {
 
             return circle;
         },
-        Rect:function(props) {
+        Rect:function(two, props) {
             var x         = props.x || 100;
             var y         = props.y || 100;
             var w         = props.w || 100;
@@ -101,7 +112,7 @@ var Renderer = function (Game) {
 
             two.update();
         },
-        Text:function(props) {
+        Text:function(two, props) {
             var text       = props.text      || "LOL POOP" 
 
             var x          = props.x         || 100;
@@ -163,7 +174,7 @@ var Renderer = function (Game) {
                 self.two_text._renderer.elem.addEventListener(event, f, preventDefault);
             }
         },
-        Path:function (props) {
+        Path:function (two, props) {
             var points    = props.points    || [[100,100],[100,200],[200,200],[200,100]];
 
             var fill      = props.fill      || "orangered";
@@ -242,7 +253,7 @@ var Renderer = function (Game) {
             })
             // DIRTY FLOATING POINT PRECISION BULLSHIT
 
-            var outline = r_objects["board"]["outline"] = new Primitives.Path({
+            var outline = r_objects["board"]["outline"] = new Primitives.Path(two,{
                 points: outlinePoints,
                 noFill: true,
                 linewidth: hexradius/10
@@ -282,7 +293,7 @@ var Renderer = function (Game) {
 
                 //Shit tier rendering 4 da testing b0ss
                     // var self = this;
-                    // new Primitives.Path({
+                    // new Primitives.Path(two,{
                     //     points:corners,
                     //     fill:pallete[province.owner+1]
                     // }).addEventListener(function(e){
@@ -309,7 +320,7 @@ var Renderer = function (Game) {
             this.province_points = province_points;
 
             // Render me!
-            this.PathPrimitive = new Primitives.Path({
+            this.PathPrimitive = new Primitives.Path(two,{
                 points:    province_points,
                 fill:      pallete[province.owner],
                 linewidth: hexradius/10,
@@ -324,7 +335,7 @@ var Renderer = function (Game) {
             var textX = centroid[0];
             var textY = centroid[1];
 
-            this.TextPrimitive = new Primitives.Text({
+            this.TextPrimitive = new Primitives.Text(two,{
                 x: textX,
                 y: textY,
                 text: provinceID,
@@ -558,6 +569,17 @@ var Renderer = function (Game) {
 
         console.timeEnd("Rendering Board");
         
+
+
+        // ---------- UI ---------- //
+        var seed_obj = new Primitives.Text(ui, {
+            x:120,
+            y:20,
+            text:"Seed: " + Game.Data.seed,
+            font_size: 20
+        })
+
+
         // Attach event handlers
         initEventHandlers();
 
