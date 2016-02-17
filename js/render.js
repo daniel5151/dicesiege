@@ -83,16 +83,23 @@ var Renderer = function (Game) {
 
             return circle;
         },
-        Rect:function() {
-            // var rect = two.makeRectangle(213, 100, 100, 100);
+        Rect:function(props) {
+            var x         = props.x || 100;
+            var y         = props.y || 100;
+            var w         = props.w || 100;
+            var h         = props.h || 100;
 
-            // rect.fill = 'rgb(0, 200, 255)';
-            // rect.opacity = 0.75;
-            // rect.noStroke();
+            var fill      = props.fill      || "white";
+            var stroke    = props.stroke    || "black";
+            var linewidth = props.linewidth || 2;
 
-            // two.update();
+            this.two_rect = two.makeRectangle(x, y, w, h);
 
-            // return rect;
+            this.two_rect.fill      = fill;
+            this.two_rect.stroke    = stroke;
+            this.two_rect.linewidth = linewidth;
+
+            two.update();
         },
         Text:function(props) {
             var text       = props.text      || "LOL POOP" 
@@ -105,15 +112,40 @@ var Renderer = function (Game) {
             var font       = props.font      || "sans-serif"
             var alignment  = props.alignment || "center"
 
-            this.two_text = two.makeText(text, x, y, {
+            var text = two.makeText(text, x, y, {
                 fill: color,
                 size: font_size,
                 family: font,
                 alignment: alignment
             });
 
+            this.two_text = two.makeGroup();
+
             // Now, we extend Two.js's text rendering system with some *flavor* ;)
 
+            // First, we add a "bounding box" rectangle so we can do neat stuff
+            if (props.bounding_box !== undefined) {
+                // Temporary w / h soln until i figure out exact bounding box of text calculation
+                var bounding_box = two.makeRoundedRectangle(x, y-1, font_size*2, font_size+5, 5);
+
+                var fill      = props.bounding_box.fill      || "rgba(255,255,255,0.75)";
+                var stroke    = props.bounding_box.stroke    || "black";
+                var linewidth = props.bounding_box.linewidth || 1;
+
+                bounding_box.fill      = fill     
+                bounding_box.stroke    = stroke   
+                bounding_box.linewidth = linewidth
+
+                this.two_text.add(bounding_box);
+            }
+
+            this.two_text.add(text);
+
+
+            two.update();
+
+            // Next, we make it so that we can add custom CSS classes to our Text object
+            // This is mainly for setting the cursor to default when hovering over the text
             var self = this;
             this.updateClassList = function () {
                 if ( two.type === Two.Types.svg && props.classes !== undefined) {
@@ -124,6 +156,7 @@ var Renderer = function (Game) {
                 }
             }
 
+            // Lastly, magical touch event handlers ngggghhhhhhhnggg
             this.addEventListener = function (event, f, preventDefault) {
                 if (two.type !== Two.Types.svg) return;
 
@@ -175,6 +208,48 @@ var Renderer = function (Game) {
 
     // ---- GAME OBJECTS ---- //
     var GameObjects = {
+        ProvinceOutline:function () {
+            /* OUTLINE */
+            var outlinePoints = [];
+            for (var x = 0; x < Game.Data.dims.w; x++) {
+                for (var y = 0; y < Game.Data.dims.h; y++) {
+                    // TODO: Add some if statement to skip internal tiles
+
+                    // calculate coordinates of each corner
+                    var corners = Utils.getHexCorners(x,y)
+
+                    for (var corner in corners) {
+                        // DIRTY FLOATING POINT PRECISION BULLSHIT
+                                corners[corner][0] += 100;
+                                corners[corner][1] += 100;
+                        // DIRTY FLOATING POINT PRECISION BULLSHIT
+                        
+                        outlinePoints.push(corners[corner]);
+                    }
+                }
+            }
+
+            // Magic. MAGIC. MAAAGGGGIIIICCCC
+            outlinePoints = hull(outlinePoints, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
+            outlinePoints = outlinePoints.slice(0,-1);
+            
+            // DIRTY FLOATING POINT PRECISION BULLSHIT
+            outlinePoints = outlinePoints.map(function (pt) {
+                return [
+                    pt[0] - 100, 
+                    pt[1] - 100
+                ];
+            })
+            // DIRTY FLOATING POINT PRECISION BULLSHIT
+
+            var outline = r_objects["board"]["outline"] = new Primitives.Path({
+                points: outlinePoints,
+                noFill: true,
+                linewidth: hexradius/10
+            });
+
+            this.two_path = outline.two_path;
+        },
         Province:function (props) {
             var provinceID = props.id;
 
@@ -237,7 +312,7 @@ var Renderer = function (Game) {
             this.PathPrimitive = new Primitives.Path({
                 points:    province_points,
                 fill:      pallete[province.owner],
-                linewidth: hexradius/10
+                linewidth: hexradius/10,
             })
 
             // Alright! Now that the province base is done, let's add the other stuff!
@@ -253,7 +328,8 @@ var Renderer = function (Game) {
                 x: textX,
                 y: textY,
                 text: provinceID,
-                classes:["province-text"]
+                classes:["province-text"],
+                bounding_box: true
             });
 
 
@@ -425,8 +501,14 @@ var Renderer = function (Game) {
         pallete = Utils.generatePallete(Game.Data.n_players);
         pallete.unshift("white");
 
+        /* z-ordering, the shitty way ^TM */
+        r_groups["foregrounds"] = {};
+        r_groups["backgrounds"] = {};
+
         // ---------- BOARD ---------- //
         console.time("Rendering Board");
+
+        // -- Object Generation -- //
 
         r_objects["board"] = {};
 
@@ -437,48 +519,9 @@ var Renderer = function (Game) {
         }
 
         /* OUTLINE */
-        var outlinePoints = [];
-        for (var x = 0; x < Game.Data.dims.w; x++) {
-            for (var y = 0; y < Game.Data.dims.h; y++) {
-                // TODO: Add some if statement to skip internal tiles
+        r_objects["board"]["outline"] = new GameObjects.ProvinceOutline();
 
-                // calculate coordinates of each corner
-                var corners = Utils.getHexCorners(x,y)
-
-                for (var corner in corners) {
-                    // DIRTY FLOATING POINT PRECISION BULLSHIT
-                            corners[corner][0] += 100;
-                            corners[corner][1] += 100;
-                    // DIRTY FLOATING POINT PRECISION BULLSHIT
-                    
-                    outlinePoints.push(corners[corner]);
-                }
-            }
-        }
-
-        // Magic. MAGIC. MAAAGGGGIIIICCCC
-        outlinePoints = hull(outlinePoints, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
-        outlinePoints = outlinePoints.slice(0,-1);
-        
-        // DIRTY FLOATING POINT PRECISION BULLSHIT
-        outlinePoints = outlinePoints.map(function (pt) {
-            return [
-                pt[0] - 100, 
-                pt[1] - 100
-            ];
-        })
-        // DIRTY FLOATING POINT PRECISION BULLSHIT
-
-        r_objects["board"]["outline"] = new Primitives.Path({
-            points: outlinePoints,
-            noFill: true,
-            linewidth: hexradius/10
-        })
-
-
-        /* z-ordering, the shitty way ^TM */
-        r_groups["foregrounds"] = {};
-        r_groups["backgrounds"] = {};
+        // -- Object Grouping -- //
 
         /* Board Rendering Group */
         r_groups["board"] = two.makeGroup();
@@ -506,6 +549,12 @@ var Renderer = function (Game) {
         r_groups["foregrounds"]["board"] = two.makeGroup();
         r_groups["board"]
             .add(r_groups["foregrounds"]["board"]);
+
+        // Push all of the province text to the foreground (so it doesn't clip behind provinces)
+        for (var province in r_objects["board"]["provinces"]) {
+            r_groups["foregrounds"]["board"]
+                .add(r_objects["board"]["provinces"][province].TextPrimitive.two_text);
+        }
 
         console.timeEnd("Rendering Board");
         
@@ -576,6 +625,7 @@ var Renderer = function (Game) {
             // Why? Dunno. But it fixes things.
             zui.zoomBy( ((Math.random()>0.5)?0.000000001:-0.000000001), e.clientX, e.clientY);
             two.update();
+
         });
         $stage.addEventListener("mouseup", function(e) {
             prevX = -1;
