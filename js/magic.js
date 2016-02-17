@@ -62,6 +62,45 @@ function uniq(a) {
 }
 
 
+
+function get_polygon_centroid(pts) {
+    var first = pts[0], last = pts[pts.length-1];
+    if (first[0] != last[0] || first[1] != last[1]) pts.push(first);
+    var twicearea = 0,
+    x = 0, y = 0,
+    nPts = pts.length,
+    p1, p2, f;
+    for ( var i = 0, j = nPts - 1 ; i < nPts ; j = i++ ) {
+        p1 = pts[i]; p2 = pts[j];
+        f = p1[0] * p2[1] - p2[0] * p1[1];
+        twicearea += f;          
+        x += ( p1[0] + p2[0] ) * f;
+        y += ( p1[1] + p2[1] ) * f;
+   }
+   f = twicearea * 3;
+   return [x / f, y / f];
+}
+
+function inside_polygon(point, vs) {
+    // ray-casting algorithm based on
+    // http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+
+    var x = point[0], y = point[1];
+
+    var inside = false;
+    for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        var xi = vs[i][0], yi = vs[i][1];
+        var xj = vs[j][0], yj = vs[j][1];
+
+        var intersect = ((yi > y) != (yj > y))
+            && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+
+    return inside;
+};
+
+
 function strToLexNum(str) {
     var sum = 0;
     for (var i = 0; i < str.length; i++) {

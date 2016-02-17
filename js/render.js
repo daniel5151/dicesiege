@@ -94,6 +94,42 @@ var Renderer = function (Game) {
 
             // return rect;
         },
+        Text:function(props) {
+            var text       = props.text      || "LOL POOP" 
+
+            var x          = props.x         || 100;
+            var y          = props.y         || 100;
+
+            var color      = props.color     || "black"
+            var font_size  = props.font_size || 12;
+            var font       = props.font      || "sans-serif"
+            var alignment  = props.alignment || "center"
+
+            this.two_text = two.makeText(text, x, y, {
+                fill: color,
+                size: font_size,
+                family: font,
+                alignment: alignment
+            });
+
+            // Now, we extend Two.js's text rendering system with some *flavor* ;)
+
+            var self = this;
+            this.updateClassList = function () {
+                if ( two.type === Two.Types.svg && props.classes !== undefined) {
+                    var elem = self.two_text._renderer.elem
+                    for (var i = 0; i < props.classes.length; i++) {
+                        elem.classList.add(props.classes[i]);
+                    }
+                }
+            }
+
+            this.addEventListener = function (event, f, preventDefault) {
+                if (two.type !== Two.Types.svg) return;
+
+                self.two_text._renderer.elem.addEventListener(event, f, preventDefault);
+            }
+        },
         Path:function (props) {
             var points    = props.points    || [[100,100],[100,200],[200,200],[200,100]];
 
@@ -117,14 +153,14 @@ var Renderer = function (Game) {
                 ));
             };
 
-            this.path = two.makePath(anchoredPoints, false);
+            this.two_path = two.makePath(anchoredPoints, false);
 
             if (noStroke) linewidth = 0;
             if (noFill)   fill = "rgba(0,0,0,0)";
 
-            this.path.linewidth = linewidth;
-            this.path.stroke = stroke;
-            this.path.fill = fill;
+            this.two_path.linewidth = linewidth;
+            this.two_path.stroke = stroke;
+            this.two_path.fill = fill;
 
             two.update();
 
@@ -132,7 +168,7 @@ var Renderer = function (Game) {
             this.addEventListener = function (event, f, preventDefault) {
                 if (two.type !== Two.Types.svg) return;
 
-                self.path._renderer.elem.addEventListener(event, f, preventDefault);
+                self.two_path._renderer.elem.addEventListener(event, f, preventDefault);
             }
         }
     };
@@ -149,7 +185,7 @@ var Renderer = function (Game) {
             var tiles    = province.tiles;
 
             // This is the end goal.
-            // We need to populate this array with the path for the province shape!
+            // We need to populate this array with the two_path for the province shape!
             var province_points = [];
 
             // Let's do work for each tile!
@@ -194,15 +230,43 @@ var Renderer = function (Game) {
             })
             // DIRTY FLOATING POINT PRECISION BULLSHIT
 
-            this.Primitive = new Primitives.Path({
+            // Keep a record of all this math we did
+            this.province_points = province_points;
+
+            // Render me!
+            this.PathPrimitive = new Primitives.Path({
                 points:    province_points,
                 fill:      pallete[province.owner],
                 linewidth: hexradius/10
             })
 
+            // Alright! Now that the province base is done, let's add the other stuff!
+
+            // For now, we will jsut display a string with some debug info
+
+            // This centroid function is MAGIC
+            var centroid = get_polygon_centroid(province_points);
+            var textX = centroid[0];
+            var textY = centroid[1];
+
+            this.TextPrimitive = new Primitives.Text({
+                x: textX,
+                y: textY,
+                text: provinceID,
+                classes:["province-text"]
+            });
+
+
+
+
+
+
+
+
             var self = this;
             this.addEventListener = function(event, f, preventDefault) {
-                self.Primitive.addEventListener(event, f, preventDefault);
+                self.PathPrimitive.addEventListener(event, f, preventDefault);
+                self.TextPrimitive.addEventListener(event, f, preventDefault);
             }
         }
     }
@@ -252,7 +316,7 @@ var Renderer = function (Game) {
             return corners;
         },
         getPathFromPID: function (provinceID) {
-            return r_objects.board.provinces[provinceID].Primitive.path;
+            return r_objects.board.provinces[provinceID].PathPrimitive.two_path;
         }
     }
 
@@ -356,6 +420,101 @@ var Renderer = function (Game) {
         this.GET_RENDERED_GROUPS  = function () { return r_groups;  }
 
 
+    this.init = function () {
+        // ------ SHARED ASSETS ------ //
+        pallete = Utils.generatePallete(Game.Data.n_players);
+        pallete.unshift("white");
+
+        // ---------- BOARD ---------- //
+        console.time("Rendering Board");
+
+        r_objects["board"] = {};
+
+        /* PROVINCES */
+        r_objects["board"]["provinces"] = {};
+        for (var id in Game.Data.provinces) {
+            r_objects["board"]["provinces"][id] = new GameObjects.Province({id:id});
+        }
+
+        /* OUTLINE */
+        var outlinePoints = [];
+        for (var x = 0; x < Game.Data.dims.w; x++) {
+            for (var y = 0; y < Game.Data.dims.h; y++) {
+                // TODO: Add some if statement to skip internal tiles
+
+                // calculate coordinates of each corner
+                var corners = Utils.getHexCorners(x,y)
+
+                for (var corner in corners) {
+                    // DIRTY FLOATING POINT PRECISION BULLSHIT
+                            corners[corner][0] += 100;
+                            corners[corner][1] += 100;
+                    // DIRTY FLOATING POINT PRECISION BULLSHIT
+                    
+                    outlinePoints.push(corners[corner]);
+                }
+            }
+        }
+
+        // Magic. MAGIC. MAAAGGGGIIIICCCC
+        outlinePoints = hull(outlinePoints, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
+        outlinePoints = outlinePoints.slice(0,-1);
+        
+        // DIRTY FLOATING POINT PRECISION BULLSHIT
+        outlinePoints = outlinePoints.map(function (pt) {
+            return [
+                pt[0] - 100, 
+                pt[1] - 100
+            ];
+        })
+        // DIRTY FLOATING POINT PRECISION BULLSHIT
+
+        r_objects["board"]["outline"] = new Primitives.Path({
+            points: outlinePoints,
+            noFill: true,
+            linewidth: hexradius/10
+        })
+
+
+        /* z-ordering, the shitty way ^TM */
+        r_groups["foregrounds"] = {};
+        r_groups["backgrounds"] = {};
+
+        /* Board Rendering Group */
+        r_groups["board"] = two.makeGroup();
+
+        // Add outline first. This should always stay underneath everything
+        r_groups["board"]
+            .add(r_objects["board"]["outline"].two_path);
+
+        // Make a background level for the board
+        r_groups["backgrounds"]["board"] = two.makeGroup();
+        r_groups["board"]
+            .add(r_groups["backgrounds"]["board"]);
+        
+        // Add provinces
+        for (var province in r_objects["board"]["provinces"]) {
+            r_groups["board"].add(
+                r_objects["board"]["provinces"][province].PathPrimitive.two_path,
+                r_objects["board"]["provinces"][province].TextPrimitive.two_text
+            );
+
+            r_objects["board"]["provinces"][province].TextPrimitive.updateClassList();
+        }
+
+        // Make a foreground level for the board
+        r_groups["foregrounds"]["board"] = two.makeGroup();
+        r_groups["board"]
+            .add(r_groups["foregrounds"]["board"]);
+
+        console.timeEnd("Rendering Board");
+        
+        // Attach event handlers
+        initEventHandlers();
+
+        // Render everything!
+        ReRender.resize();
+    };
 
     function initEventHandlers() {
         two.bind("resize", ReRender.resize);
@@ -478,111 +637,46 @@ var Renderer = function (Game) {
             PROVINCES
         */
 
+        // If we are using a non SVG renderer, we gotta do some sneaky beaky stuff to get clicking working
+
+        // TOO BAD I DIDN'T IMPLEMENT THIS FULLY LOL
+        // It doesn't account for Zoom and Pan.
+        // That's going to be a biiiiiitch.
+
+        if (two.type !== Two.Types.svg) {
+            document.addEventListener("click", function(e){
+                for (var province in r_objects["board"]["provinces"]) {
+                    (function(province_obj){
+
+                        var isClicked = inside_polygon(
+                            [
+                                (e.pageX - r_groups["board"].translation._x) / r_groups["board"].scale, 
+                                (e.pageY - r_groups["board"].translation._y) / r_groups["board"].scale
+                            ], 
+                            province_obj.province_points
+                        );
+
+                        if (clickNoDrag && isClicked) {
+                            Game.Input.province.clicked(province_obj.provinceID);
+                            console.log(province_obj.provinceID)
+                        }
+
+                    })(r_objects["board"]["provinces"][province])
+                }
+            })
+        }
+
+
         for (var province in r_objects["board"]["provinces"]) {
             (function(province_obj){
+                // If we are lucky enough that we have a SVG renderer, then just attach event handlers
+                // Easy Peasy
                 province_obj.addEventListener("click", function(e){
                     if (clickNoDrag) Game.Input.province.clicked(province_obj.provinceID);
                 })
             })(r_objects["board"]["provinces"][province])
         }
-
-
-
     }
-
-    this.init = function () {
-        // ------ SHARED ASSETS ------ //
-        pallete = Utils.generatePallete(Game.Data.n_players);
-        pallete.unshift("white");
-
-        // ---------- BOARD ---------- //
-        console.time("Rendering Board");
-
-        r_objects["board"] = {};
-
-        /* PROVINCES */
-        r_objects.board["provinces"] = {};
-        for (var id in Game.Data.provinces) {
-            r_objects.board.provinces[id] = new GameObjects.Province({id:id});
-        }
-
-        /* OUTLINE */
-        var outlinePoints = [];
-        for (var x = 0; x < Game.Data.dims.w; x++) {
-            for (var y = 0; y < Game.Data.dims.h; y++) {
-                // TODO: Add some if statement to skip internal tiles
-
-                // calculate coordinates of each corner
-                var corners = Utils.getHexCorners(x,y)
-
-                for (var corner in corners) {
-                    // DIRTY FLOATING POINT PRECISION BULLSHIT
-                            corners[corner][0] += 100;
-                            corners[corner][1] += 100;
-                    // DIRTY FLOATING POINT PRECISION BULLSHIT
-                    
-                    outlinePoints.push(corners[corner]);
-                }
-            }
-        }
-
-        // Magic. MAGIC. MAAAGGGGIIIICCCC
-        outlinePoints = hull(outlinePoints, Math.sqrt(HexW*HexW + HexH*HexH)*1.1 )
-        outlinePoints = outlinePoints.slice(0,-1);
-        
-        // DIRTY FLOATING POINT PRECISION BULLSHIT
-        outlinePoints = outlinePoints.map(function (pt) {
-            return [
-                pt[0] - 100, 
-                pt[1] - 100
-            ];
-        })
-        // DIRTY FLOATING POINT PRECISION BULLSHIT
-
-        r_objects["board"]["outline"] = new Primitives.Path({
-            points: outlinePoints,
-            noFill: true,
-            linewidth: hexradius/10
-        })
-
-
-
-        /* z-ordering, the shitty way ^TM */
-        r_groups["foregrounds"] = {};
-        r_groups["backgrounds"] = {};
-
-        /* Board Rendering Group */
-        r_groups["board"] = two.makeGroup();
-
-        // Add outline first. This should always stay underneath everything
-        r_groups["board"]
-            .add(r_objects["board"]["outline"].path);
-
-        // Make a background level for the board
-        r_groups["backgrounds"]["board"] = two.makeGroup();
-        r_groups["board"]
-            .add(r_groups["backgrounds"]["board"]);
-        
-        // Add provinces
-        for (var province in r_objects["board"]["provinces"]) {
-            r_groups["board"]
-                .add(r_objects["board"]["provinces"][province].Primitive.path);
-        }
-
-        // Make a foreground level for the board
-        r_groups["foregrounds"]["board"] = two.makeGroup();
-        r_groups["board"]
-            .add(r_groups["foregrounds"]["board"]);
-
-        console.timeEnd("Rendering Board");
-        
-        // Attach event handlers
-        initEventHandlers();
-
-        // Render everything!
-        ReRender.resize();
-    };
-
 
     this.init();
 };
