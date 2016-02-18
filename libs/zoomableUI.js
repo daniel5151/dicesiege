@@ -31,7 +31,7 @@ _.extend(Surface.prototype, {
 
 });
 
-var ZUI = function(two) {
+var ZUI = function(two, group) {
 
   this.limits = {
     scale: ZUI.Limit.clone(),
@@ -50,7 +50,7 @@ var ZUI = function(two) {
   this.reset();
   this.updateSurface();
 
-  this.add(new Surface(two.scene));
+  this.add(new Surface(group));
 
 };
 

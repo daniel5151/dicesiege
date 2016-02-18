@@ -39,14 +39,6 @@ var Renderer = function (Game) {
     // ---- ESSENTIAL ELEMENTS ---- //
     var elem = document.getElementById('board');
 
-    var ui = new Two({
-        fullscreen:true,
-        // type:Two.Types.webgl,
-        // type:Two.Types.canvas,
-        // width: 285,
-        // height: 200
-    }).appendTo(elem);
-
     var two = new Two({
         fullscreen:true,
         // type:Two.Types.webgl,
@@ -572,19 +564,19 @@ var Renderer = function (Game) {
 
 
         // ---------- UI ---------- //
-        var seed_obj = new Primitives.Text(ui, {
+        r_objects["ui"] = {};
+        r_objects["ui"]["seed"] = new Primitives.Text(two, {
             x:120,
             y:20,
             text:"Seed: " + Game.Data.seed,
             font_size: 20
-        })
-
-
-        // Attach event handlers
-        initEventHandlers();
+        });
 
         // Render everything!
         ReRender.resize();
+
+        // Attach event handlers
+        initEventHandlers();
     };
 
     function initEventHandlers() {
@@ -594,12 +586,16 @@ var Renderer = function (Game) {
             ZOOMING AND PANNING
         */
 
-        // This is magic. Bless whoever made ZUI
-        zui = new ZUI(two);
+        // This is magic. Bless ZUI
+        zui = new ZUI(two, r_groups["board"]);
+
+        // Why does this fix things? Good question!
+        zui.surfaceMatrix = r_groups["board"]._matrix
+        
         zui.addLimits(0.75, 8);
 
         // Useful label
-        var $stage = two.renderer.domElement;
+        var $stage = r_groups["board"]._renderer.elem;
 
         // Key Variables
         var prevX = -1;
@@ -631,7 +627,7 @@ var Renderer = function (Game) {
 
             clickNoDrag = true;
         });
-        $stage.addEventListener("mousemove", function(e) {
+        document.addEventListener("mousemove", function(e) {
             if (prevX == -1 && prevY == -1) return;
 
             clickNoDrag = false;
@@ -649,7 +645,7 @@ var Renderer = function (Game) {
             two.update();
 
         });
-        $stage.addEventListener("mouseup", function(e) {
+        document.addEventListener("mouseup", function(e) {
             prevX = -1;
             prevY = -1;
         });
@@ -665,7 +661,7 @@ var Renderer = function (Game) {
 
             clickNoDrag = true;
         });
-        $stage.addEventListener("touchmove", function(e) {
+        document.addEventListener("touchmove", function(e) {
             if (!scaling) {
                 if (prevX == -1 && prevY == -1) return;
 
@@ -697,7 +693,7 @@ var Renderer = function (Game) {
                 two.update()
             }
         });
-        $stage.addEventListener("touchend", function(e) {
+        document.addEventListener("touchend", function(e) {
             prevX = -1;
             prevY = -1;
 
