@@ -569,8 +569,10 @@ var Renderer = function (Game) {
             x:120,
             y:20,
             text:"Seed: " + Game.Data.seed,
-            font_size: 20
+            font_size: 20,
+            classes:["selectable-text"]
         });
+        r_objects["ui"]["seed"].updateClassList();
 
         // Render everything!
         ReRender.resize();
