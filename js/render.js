@@ -112,10 +112,10 @@ var Renderer = function (Game) {
 
             var color      = props.color     || "black"
             var font_size  = props.font_size || 12;
-            var font       = props.font      || "sans-serif"
+            var font       = props.font      || "monospace"
             var alignment  = props.alignment || "center"
 
-            var text = two.makeText(text, x, y, {
+            var text_obj = two.makeText(text, x, y, {
                 fill: color,
                 size: font_size,
                 family: font,
@@ -128,8 +128,8 @@ var Renderer = function (Game) {
 
             // First, we add a "bounding box" rectangle so we can do neat stuff
             if (props.bounding_box !== undefined) {
-                // Temporary w / h soln until i figure out exact bounding box of text calculation
-                var bounding_box = two.makeRoundedRectangle(x, y-1, font_size*2, font_size+5, 5);
+                // This is a pretty finicky bounding box calculation, but it will do for now
+                var bounding_box = two.makeRoundedRectangle(x, y-1, font_size*(text.toString().length*0.6)+5, font_size+5, 5);
 
                 var fill      = props.bounding_box.fill      || "rgba(255,255,255,0.75)";
                 var stroke    = props.bounding_box.stroke    || "black";
@@ -142,7 +142,7 @@ var Renderer = function (Game) {
                 this.two_text.add(bounding_box);
             }
 
-            this.two_text.add(text);
+            this.two_text.add(text_obj);
 
 
             two.update();
@@ -570,7 +570,8 @@ var Renderer = function (Game) {
             y:20,
             text:"Seed: " + Game.Data.seed,
             font_size: 20,
-            classes:["selectable-text"]
+            classes:["selectable-text"],
+            bounding_box: true
         });
         r_objects["ui"]["seed"].updateClassList();
 
