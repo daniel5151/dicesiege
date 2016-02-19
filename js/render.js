@@ -509,7 +509,7 @@ var Renderer = function (Game) {
         r_groups["backgrounds"] = {};
 
         // ---------- BOARD ---------- //
-        console.time("Rendering Board");
+        console.time("Total Board Rendering Time");
 
         // -- Object Generation -- //
 
@@ -559,7 +559,7 @@ var Renderer = function (Game) {
                 .add(r_objects["board"]["provinces"][province].TextPrimitive.two_text);
         }
 
-        console.timeEnd("Rendering Board");
+        console.timeEnd("Total Board Rendering Time");
         
 
 
@@ -601,6 +601,10 @@ var Renderer = function (Game) {
         var prevX = -1;
         var prevY = -1;
 
+        var startX = -1;
+        var startY = -1;
+        CLICK_THRESHOLD = 10; // Arbitrary number lol
+
         var clickNoDrag = false;
 
         var scaling = false;
@@ -622,15 +626,16 @@ var Renderer = function (Game) {
         $stage.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
 
         $stage.addEventListener("mousedown", function(e) {
-            prevX = e.pageX;
-            prevY = e.pageY;
+            prevX = startX = e.pageX;
+            prevY = startY = e.pageY;
 
             clickNoDrag = true;
         });
         document.addEventListener("mousemove", function(e) {
             if (prevX == -1 && prevY == -1) return;
 
-            clickNoDrag = false;
+            if (Math.abs(e.pageX - startX) + Math.abs(e.pageY - startY) > CLICK_THRESHOLD)
+                clickNoDrag = false;
 
             zui.translateSurface(
                 -(prevX - e.pageX),
@@ -654,8 +659,8 @@ var Renderer = function (Game) {
 
         // ---------- TOUCH ---------- // 
         $stage.addEventListener("touchstart", function(e) {
-            prevX = e.targetTouches[0].pageX;
-            prevY = e.targetTouches[0].pageY;
+            prevX = startX = e.targetTouches[0].pageX;
+            prevY = startY = e.targetTouches[0].pageY;
 
             if(e.touches.length == 2) { scaling = true; }
 
@@ -665,7 +670,8 @@ var Renderer = function (Game) {
             if (!scaling) {
                 if (prevX == -1 && prevY == -1) return;
 
-                clickNoDrag = false;
+                if (Math.abs(e.pageX - startX) + Math.abs(e.pageY - startY) > CLICK_THRESHOLD)
+                    clickNoDrag = false;
 
                 zui.translateSurface(
                     -(prevX - e.targetTouches[0].pageX),
