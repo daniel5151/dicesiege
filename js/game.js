@@ -179,7 +179,7 @@ function Map(dims, players, seed) {
     console.timeEnd("Growth by Iteration");
 
     // find out what hexes belong to what provinces, and also which provinces border one another
-    console.time("Enumerating Provinces");
+    console.time("Calculating interesting Province data");
 
     for (var y = 0; y < dims.h; y++) {
         for (var x = 0; x < dims.w; x++) {
@@ -247,56 +247,130 @@ function Map(dims, players, seed) {
             };
         }
     }
-    console.timeEnd("Enumerating Provinces");
+    console.timeEnd("Calculating interesting Province data");
 
     // assign owners to each province making sure there is a continuous landmass
-    // be warned. trash code ahead.
+
     console.time("Assigning province owners");
-    var MAX_ITER = 100000;
 
-    var totalProvinces = provinces.length;
+    // So, I decided to revisit this and try to make it better.
 
-    var playerCounter = 0; // needed to give each player correct ammount of land
+    // The original method I used was, well, gross.
+    // It picked a random province as a "start" province, and then it randomly 
+    // "grew" the province around itself, going on until the requested number
+    // of provinces would be selected.
 
-    var someProvince = getRandomInt(0,totalProvinces); // get a random start province
+    // This algorithm led to "blobby" maps, where the growth would occur on
+    // just one side of the map, leaving a lot of whitespace on the other end
+    // Also, sometimes it didn't terminate, which is bad...
 
-    var seenProvinces = [someProvince]; // add that province to the list of seen provinces
-    while (seenProvinces.length < totalProvinces*2/3) { // we want to fill up 2/3 of the board
-        if (!MAX_ITER--) exit();
-        // get a list of all provinces bordering the currecnt province
-        var currentBorderProvinces = provinces[someProvince].bordering;
+    // I've developed a new province assignment algorithm that should lead to
+    // nicer maps, even if it is more processor intensive. 
+    // In a nutshell, this algorithm works by picking multiple random "key"
+    // provinces, and using a Graph traversal algorithm to find the paths
+    // between them, and selecting provinces based on those paths.
 
-        // for each of the provinces that border out currently province
-        for (var i = 0; i < currentBorderProvinces.length; i++) {
-            // we make a readbility varialbe of that current province
-            var someBorderProvince = currentBorderProvinces[i];
+    // It seems to create more "even" maps, and it also looks nicer in code.
 
-            // check if we have already set it's value
-            var doPush = true;
-            for (var j = 0; j < seenProvinces.length; j++) {
-                if (seenProvinces[j] == someBorderProvince) doPush = false;
-            }
-            if (doPush  && random() < 0.25) { // if we have not, we push it to the seen array and update it's owner info
-                seenProvinces.push(someBorderProvince);
-                provinces[someBorderProvince].owner = (playerCounter++ % players) + 1;
+    // I am going to leave both heuristics in the code for now, since they
+    // each have their merits and their detriments.
 
-                // set province owner
-                for (var tile = 0; tile < provinces[someBorderProvince].tiles.length; tile++) {
-                    var row = provinces[someBorderProvince].tiles[tile][1];
-                    var col = provinces[someBorderProvince].tiles[tile][0];
-                }
+    // By default though, I think i'm going to stick with the new Graph based one.
+
+    var HEURISTIC = 1;
+
+    if (HEURISTIC == 1) {
+        // on a scale of 1-10, how "dense" should the map be?
+        // By the way, this is suuuper vague, and it only starts to matter on larger maps. ish.
+        // Like I said, *very* vague
+        var DENSITY = 5
+
+        // Pick some arbitrary provinces
+        var startProvinces = getRandomSeededArrayOfInts(2 + Math.floor(provinces.length / (11 - DENSITY)),0,provinces.length);
+
+        // NOTE:
+        // The startProvinces choice could be improved by selecting provinces based on map location
+        // i.e using the tilemap to select provinces at various key points on the map
+
+        // Using magical graph algorithms, we can find the shortest paths between them!
+        // First, we have to generate a "map" object that the graph algo can work nicely with:
+        var graph_map = {};
+        provinces.forEach(function(province){
+            graph_map[province.id] = {};
+            province.bordering.forEach(function(borderPID){
+                graph_map[province.id][borderPID] = 1;
+            })
+        })
+
+        // Next, throw that map into Graph
+        var province_graph = new Graph(graph_map);
+
+        // Now, we let the graph algoritm do it's work ;)
+        var shortestPaths = [];
+        for (var i = 0; i < startProvinces.length; i++) {
+            for (var j = i+1; j < startProvinces.length; j++) {
+                // let's add some randomness, for giggles
+                if ( getRandomSeededInt(0,5) === 0 ) continue;
+
+                shortestPaths.push(
+                    province_graph.findShortestPath(startProvinces[i], startProvinces[j])
+                        .map(function(x){ return parseInt(x) })
+                );
             }
         }
 
-        // we then chose a province from seen-provinces to continue the process untill full
-        someProvince = seenProvinces[getRandomInt(0,seenProvinces.length-1)];
-
-        // log % completion
-        // console.log( Math.floor((seenProvinces.length / totalProvinces) / (2/3) * 100) );
+        // concat all of these paths into one huge list of provinces
+        var selected_provinces = [].concat.apply([], shortestPaths);
+        // let's make it unique
+        selected_provinces = uniq(selected_provinces)
+        
+        // Finally, let's assign a player to each province
+        var playerCounter = 0; // needed to give each player correct ammount of land
+        selected_provinces.forEach(function(selectedPID){
+            provinces[selectedPID].owner = (playerCounter++ % players) + 1;
+        });
     }
+    else if (HEURISTIC == 0) {
+        var totalProvinces = provinces.length;
+
+        var playerCounter = 0; // needed to give each player correct ammount of land
+
+        var someProvince = getRandomSeededInt(0,totalProvinces); // get a random start province
+
+        var seenProvinces = [someProvince]; // add that province to the list of seen provinces
+        var MAX_ITER = 10000;
+        while (seenProvinces.length < totalProvinces*2/3) { // we want to fill up 2/3 of the board
+            if (!MAX_ITER--) exit();
+            // get a list of all provinces bordering the currecnt province
+            var currentBorderProvinces = provinces[someProvince].bordering;
+
+            // for each of the provinces that border out currently province
+            for (var i = 0; i < currentBorderProvinces.length; i++) {
+                // we make a readbility varialbe of that current province
+                var someBorderProvince = currentBorderProvinces[i];
+
+                // check if we have already set it's value
+                var doPush = true;
+                for (var j = 0; j < seenProvinces.length; j++) {
+                    if (seenProvinces[j] == someBorderProvince) doPush = false;
+                }
+                if (doPush  && random() < 0.25) { // if we have not, we push it to the seen array and update it's owner info
+                    seenProvinces.push(someBorderProvince);
+                    provinces[someBorderProvince].owner = (playerCounter++ % players) + 1;
+                }
+            }
+
+            // we then chose a province from seen-provinces to continue the process untill full
+            someProvince = seenProvinces[getRandomSeededInt(0,seenProvinces.length-1)];
+
+            // log % completion
+            // console.log( Math.floor((seenProvinces.length / totalProvinces) / (2/3) * 100) );
+        }
+    };
+
     console.timeEnd("Assigning province owners");
 
-    console.time("Creating list of provinces Object");
+    console.time("Creating object of selected provinces");
 
     var provinces_obj = {};
 
@@ -307,12 +381,12 @@ function Map(dims, players, seed) {
         })
 
         // Discard provinces that are not owned by anyone
-        if (province.owner !== 0) provinces_obj[province.id] = province;
+        if (province.owner !== 0) 
+            provinces_obj[province.id] = province;
     })
 
-    console.timeEnd("Creating list of provinces Object");
 
-
+    console.timeEnd("Creating object of selected provinces");
 
     console.log("\n");
     console.timeEnd("Total Map Generation Time");

@@ -17,11 +17,16 @@ function random() {
     return x - Math.floor(x);
 }
 
-// Personal extension
+// Personal extensions
 function getRandomSeededInt(min, max) {
     return Math.floor(random() * (max - min)) + min;
 }
-
+function getRandomSeededArrayOfInts(length, min, max) {
+    // not guaranteed to be unique
+    return Array.apply(null, Array(length)).map(function(){
+        return getRandomSeededInt(min, max);
+    })
+}
 // http://stackoverflow.com/a/1484514
 function getRandomColor() {
     var letters = '0123456789ABCDEF'.split('');
@@ -77,20 +82,154 @@ function uniq(a) {
     return out;
 }
 
-// http://stackoverflow.com/a/11935263
-function getRandomSubarray(arr, size) {
-    var shuffled = arr.slice(0), i = arr.length, temp, index;
-    while (i--) {
-        index = Math.floor((i + 1) * Math.random());
-        temp = shuffled[index];
-        shuffled[index] = shuffled[i];
-        shuffled[i] = temp;
+// https://raw.githubusercontent.com/andrewhayward/dijkstra/master/graph.js
+var Graph = (function (undefined) {
+    var extractKeys = function (obj) {
+        var keys = [], key;
+        for (key in obj) {
+            Object.prototype.hasOwnProperty.call(obj,key) && keys.push(key);
+        }
+        return keys;
     }
-    return shuffled.slice(0, size);
-}
+
+    var sorter = function (a, b) {
+        return parseFloat (a) - parseFloat (b);
+    }
+
+    var findPaths = function (map, start, end, infinity) {
+        infinity = infinity || Infinity;
+
+        var costs = {},
+            open = {'0': [start]},
+            predecessors = {},
+            keys;
+
+        var addToOpen = function (cost, vertex) {
+            var key = "" + cost;
+            if (!open[key]) open[key] = [];
+            open[key].push(vertex);
+        }
+
+        costs[start] = 0;
+
+        while (open) {
+            if(!(keys = extractKeys(open)).length) break;
+
+            keys.sort(sorter);
+
+            var key = keys[0],
+                bucket = open[key],
+                node = bucket.shift(),
+                currentCost = parseFloat(key),
+                adjacentNodes = map[node] || {};
+
+            if (!bucket.length) delete open[key];
+
+            for (var vertex in adjacentNodes) {
+                if (Object.prototype.hasOwnProperty.call(adjacentNodes, vertex)) {
+                    var cost = adjacentNodes[vertex],
+                        totalCost = cost + currentCost,
+                        vertexCost = costs[vertex];
+
+                    if ((vertexCost === undefined) || (vertexCost > totalCost)) {
+                        costs[vertex] = totalCost;
+                        addToOpen(totalCost, vertex);
+                        predecessors[vertex] = node;
+                    }
+                }
+            }
+        }
+
+        if (costs[end] === undefined) {
+            return null;
+        } else {
+            return predecessors;
+        }
+
+    }
+
+    var extractShortest = function (predecessors, end) {
+        var nodes = [],
+            u = end;
+
+        while (u) {
+            nodes.push(u);
+            u = predecessors[u];
+        }
+
+        nodes.reverse();
+        return nodes;
+    }
+
+    var findShortestPath = function (map, nodes) {
+        var start = nodes.shift(),
+            end,
+            predecessors,
+            path = [],
+            shortest;
+
+        while (nodes.length) {
+            end = nodes.shift();
+            predecessors = findPaths(map, start, end);
+
+            if (predecessors) {
+                shortest = extractShortest(predecessors, end);
+                if (nodes.length) {
+                    path.push.apply(path, shortest.slice(0, -1));
+                } else {
+                    return path.concat(shortest);
+                }
+            } else {
+                return null;
+            }
+
+            start = end;
+        }
+    }
+
+    var toArray = function (list, offset) {
+        try {
+            return Array.prototype.slice.call(list, offset);
+        } catch (e) {
+            var a = [];
+            for (var i = offset || 0, l = list.length; i < l; ++i) {
+                a.push(list[i]);
+            }
+            return a;
+        }
+    }
+
+    var Graph = function (map) {
+        this.map = map;
+    }
+
+    Graph.prototype.findShortestPath = function (start, end) {
+        if (Object.prototype.toString.call(start) === '[object Array]') {
+            return findShortestPath(this.map, start);
+        } else if (arguments.length === 2) {
+            return findShortestPath(this.map, [start, end]);
+        } else {
+            return findShortestPath(this.map, toArray(arguments));
+        }
+    }
+
+    Graph.findShortestPath = function (map, start, end) {
+        if (Object.prototype.toString.call(start) === '[object Array]') {
+            return findShortestPath(map, start);
+        } else if (arguments.length === 3) {
+            return findShortestPath(map, [start, end]);
+        } else {
+            return findShortestPath(map, toArray(arguments, 1));
+        }
+    }
+
+    return Graph;
+
+})();
 
 // http://stackoverflow.com/a/9939071
 // This is used for finding the center of provinces
+// slightly modified so it uses [x,y] instead of {x:x,y:y}
 function get_polygon_centroid(pts) {
     var first = pts[0], last = pts[pts.length-1];
     if (first[0] != last[0] || first[1] != last[1]) pts.push(first);
