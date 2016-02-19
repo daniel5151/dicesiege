@@ -46,6 +46,7 @@ var Renderer = function (Game) {
         // width: 285,
         // height: 200
     }).appendTo(elem);
+    this.two = two;
 
 
 
@@ -447,6 +448,32 @@ var Renderer = function (Game) {
             two.update();
 
             console.timeEnd("Resizing Board");
+
+            console.time("Resizing UI");
+
+            // this is an ugly workaround for now
+            two.remove(r_objects["ui"]["generate_new_map"].two_text);
+            two.remove(r_objects["ui"]["generate_new_map"].two_rect);
+
+            r_objects["ui"]["generate_new_map"] = new Primitives.Text(two, {
+                x:two.width - 30*("Generate New Map".length*0.35),
+                y:two.height - 30,
+                text:"Generate New Map",
+                font_size: 30,
+                classes:["button-text"],
+                bounding_box: {
+                    fill:"lightblue"
+                }
+            });
+            r_objects["ui"]["generate_new_map"].updateClassList();
+
+            two.update();
+
+            r_objects["ui"]["generate_new_map"].addEventListener("click",function(){
+                reinit();
+            })
+
+            console.timeEnd("Resizing UI");
         },
         province: {
             color: function (provinceID, color, suppressUpdate) {
@@ -565,6 +592,8 @@ var Renderer = function (Game) {
 
         // ---------- UI ---------- //
         r_objects["ui"] = {};
+
+        // Seed display
         r_objects["ui"]["seed"] = new Primitives.Text(two, {
             x:120,
             y:20,
@@ -574,6 +603,17 @@ var Renderer = function (Game) {
             bounding_box: true
         });
         r_objects["ui"]["seed"].updateClassList();
+
+        // Reinitialize map button
+        r_objects["ui"]["generate_new_map"] = new Primitives.Text(two, {
+            x:two.width - 20*("Generate New Map".length*0.4),
+            y:two.height - 20,
+            text:"Generate New Map",
+            font_size: 20,
+            classes:["button-text"],
+            bounding_box: true
+        });
+        r_objects["ui"]["generate_new_map"].updateClassList();
 
         // Render everything!
         ReRender.resize();
@@ -753,6 +793,14 @@ var Renderer = function (Game) {
                 })
             })(r_objects["board"]["provinces"][province])
         }
+
+        /*
+            UI
+        */
+
+        r_objects["ui"]["generate_new_map"].addEventListener("click",function(){
+            reinit();
+        })
     }
 
     this.init();

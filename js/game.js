@@ -419,7 +419,7 @@ var GenGameData = function(BOARD_DIMENSIONS,PLAYERS,SEED) {
     this.History = [];
 }
 
-var Game = function (GameData) {
+var GameController = function (GameData) {
     var thisGame = this;
 
     this.Data = GameData;
