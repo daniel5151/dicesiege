@@ -615,7 +615,8 @@ var Renderer = function () {
         // Current player indicator
         r_objects["ui"]["current_turn_text"] = new Primitives.Text(two, {
             text:"Current Player",
-            font_size: 20
+            font_size: 20,
+            bounding_box: true
         });
         r_objects["ui"]["current_turn_rect"] = new Primitives.Rect(two, {
             w: 25,
