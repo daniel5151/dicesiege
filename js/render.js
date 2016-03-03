@@ -29,9 +29,9 @@ function TableRender() {
 
 
 
-// But seriosuly tho, here is the acutal renderer
+// But seriosuly tho, here is the actual renderer
 
-var Renderer = function (Game) {
+var Renderer = function () {
     /*
         PRIVATE METHODS
     */
@@ -97,11 +97,13 @@ var Renderer = function (Game) {
             var stroke    = props.stroke    || "black";
             var linewidth = props.linewidth || 2;
 
-            this.two_rect = two.makeRectangle(x, y, w, h);
+            this.two_rect = two.makeRectangle(0, 0, w, h);
 
             this.two_rect.fill      = fill;
             this.two_rect.stroke    = stroke;
             this.two_rect.linewidth = linewidth;
+
+            this.two_rect.translation = new Two.Vector(x,y);
 
             two.update();
         },
@@ -116,7 +118,7 @@ var Renderer = function (Game) {
             var font       = props.font      || "monospace"
             var alignment  = props.alignment || "center"
 
-            var text_obj = two.makeText(text, x, y, {
+            var text_obj = two.makeText(text, 0, 0, {
                 fill: color,
                 size: font_size,
                 family: font,
@@ -130,7 +132,7 @@ var Renderer = function (Game) {
             // First, we add a "bounding box" rectangle so we can do neat stuff
             if (props.bounding_box !== undefined) {
                 // This is a pretty finicky bounding box calculation, but it will do for now
-                var bounding_box = two.makeRoundedRectangle(x, y-1, font_size*(text.toString().length*0.6)+5, font_size+5, 5);
+                var bounding_box = two.makeRoundedRectangle(0, 0-1, font_size*(text.toString().length*0.6)+5, font_size+5, 5);
 
                 var fill      = props.bounding_box.fill      || "rgba(255,255,255,0.75)";
                 var stroke    = props.bounding_box.stroke    || "black";
@@ -145,6 +147,7 @@ var Renderer = function (Game) {
 
             this.two_text.add(text_obj);
 
+            this.two_text.translation = new Two.Vector(x,y);
 
             two.update();
 
@@ -452,26 +455,13 @@ var Renderer = function (Game) {
             console.time("Resizing UI");
 
             // this is an ugly workaround for now
-            two.remove(r_objects["ui"]["generate_new_map"].two_text);
-            two.remove(r_objects["ui"]["generate_new_map"].two_rect);
-
-            r_objects["ui"]["generate_new_map"] = new Primitives.Text(two, {
-                x:two.width - 30*("Generate New Map".length*0.35),
-                y:two.height - 30,
-                text:"Generate New Map",
-                font_size: 30,
-                classes:["button-text"],
-                bounding_box: {
-                    fill:"lightblue"
-                }
-            });
-            r_objects["ui"]["generate_new_map"].updateClassList();
+            r_objects["ui"]["generate_new_map"].two_text.translation.set(
+                two.width - 30*("Generate New Map".length*0.35),
+                two.height - 30
+            );
+            r_objects["ui"]["generate_new_map"].two_text.scale += 0.000001;
 
             two.update();
-
-            r_objects["ui"]["generate_new_map"].addEventListener("click",function(){
-                reinit();
-            })
 
             console.timeEnd("Resizing UI");
         },
@@ -520,22 +510,18 @@ var Renderer = function (Game) {
     var r_objects = {};  // Tracks individual shapes
     var r_groups = {};   // Tracks rendering groups
 
+    /* z-ordering, the shitty way ^TM */
+    r_groups["foregrounds"] = {};
+    r_groups["backgrounds"] = {};
+
     // DEBUG STUFF
         // Exposes internal objects to the outside world
         this.GET_RENDERED_OBJECTS = function () { return r_objects; }
         this.GET_RENDERED_GROUPS  = function () { return r_groups;  }
 
+    this.init = {};
 
-    this.init = function () {
-        // ------ SHARED ASSETS ------ //
-        pallete = Utils.generatePallete(Game.Data.n_players);
-        pallete.unshift("white");
-
-        /* z-ordering, the shitty way ^TM */
-        r_groups["foregrounds"] = {};
-        r_groups["backgrounds"] = {};
-
-        // ---------- BOARD ---------- //
+    this.init.board = function () {
         console.time("Total Board Rendering Time");
 
         // -- Object Generation -- //
@@ -587,10 +573,9 @@ var Renderer = function (Game) {
         }
 
         console.timeEnd("Total Board Rendering Time");
-        
+    }
 
-
-        // ---------- UI ---------- //
+    this.init.ui = function () {
         r_objects["ui"] = {};
 
         // Seed display
@@ -606,14 +591,36 @@ var Renderer = function (Game) {
 
         // Reinitialize map button
         r_objects["ui"]["generate_new_map"] = new Primitives.Text(two, {
-            x:two.width - 20*("Generate New Map".length*0.4),
-            y:two.height - 20,
+            x:two.width - 30*("Generate New Map".length*0.35),
+            y:two.height - 30,
             text:"Generate New Map",
-            font_size: 20,
+            font_size: 30,
             classes:["button-text"],
-            bounding_box: true
+            bounding_box: {
+                fill:"lightblue"
+            }
         });
         r_objects["ui"]["generate_new_map"].updateClassList();
+    }
+
+    this.init.all = function () {
+        // ------ SHARED ASSETS ------ //
+        pallete = Utils.generatePallete(Game.Data.n_players);
+        pallete.unshift("white");
+
+        this.board();
+        this.ui();
+        
+        // Render everything!
+        ReRender.resize();
+
+        // Attach event handlers
+        initEventHandlers();
+    };
+
+    this.reinit = function () {
+        this.init.board();
+        this.init.ui();
 
         // Render everything!
         ReRender.resize();
@@ -621,6 +628,7 @@ var Renderer = function (Game) {
         // Attach event handlers
         initEventHandlers();
     };
+
 
     function initEventHandlers() {
         two.bind("resize", ReRender.resize);
@@ -799,11 +807,10 @@ var Renderer = function (Game) {
         */
 
         r_objects["ui"]["generate_new_map"].addEventListener("click",function(){
+            console.log("triggered");
             reinit();
         })
     }
-
-    this.init();
 };
 
 var zui;
