@@ -26,8 +26,8 @@ function Map(dims, players, seed) {
     seedRandom( (parseFloat(seed) == seed)?parseFloat(seed):strToLexNum(seed) );
 
     // Generate array of -1
-    var ownerByHexMap = Array.apply(null, Array(dims.h)).map(function(){
-        return Array.apply(null, Array(dims.w)).map(Number.prototype.valueOf, -1)
+    var ownerByHexMap = Array.apply(null, Array(dims.r)).map(function(){
+        return Array.apply(null, Array(dims.c)).map(Number.prototype.valueOf, -1)
     });
 
     // Randomly place seeds for provinces around
@@ -37,11 +37,11 @@ function Map(dims, players, seed) {
     var assignedTiles = [];
 
     console.time("Begining initial map seeding");
-    for (var i = 0; i < (dims.h*dims.w) / ((players+1)*(BUFFER*BUFFER + BUFFER)); i++) {
+    for (var i = 0; i < (dims.r*dims.c) / ((players+1)*(BUFFER*BUFFER + BUFFER)); i++) {
         while (true){
             // pick a random point on the board
-            var randomR = Math.round(random()*(dims.h-1));
-            var randomC = Math.round(random()*(dims.w-1));
+            var randomR = Math.round(random()*(dims.r-1));
+            var randomC = Math.round(random()*(dims.c-1));
 
             // check if we have visited this piece before, and if so, just continue
             var docontinue = false;
@@ -60,8 +60,8 @@ function Map(dims, players, seed) {
             for (var dr = -BUFFER; dr <= BUFFER; dr++) {
                 for (var dc = -BUFFER; dc <= BUFFER; dc++) {
                     // check boundary conditions
-                    if (randomR + dr < 0 || randomR + dr > dims.h-1) continue;
-                    if (randomC + dc < 0 || randomC + dc > dims.w-1) continue;
+                    if (randomR + dr < 0 || randomR + dr > dims.r-1) continue;
+                    if (randomC + dc < 0 || randomC + dc > dims.c-1) continue;
 
                     // if there is a tile that is non--1 around a piece, then there is an area conflict.
                     if (ownerByHexMap[randomR + dr][randomC + dc] !== -1) {
@@ -101,9 +101,9 @@ function Map(dims, players, seed) {
     while (true) {
         // clone map
         var oldmap = [];
-        for (var row = 0; row < dims.h; row++) {
+        for (var row = 0; row < dims.r; row++) {
             oldmap.push([]);
-            for (var col = 0; col < dims.w; col++) {
+            for (var col = 0; col < dims.c; col++) {
                 oldmap[row][col] = ownerByHexMap[row][col];
             }
         }
@@ -138,8 +138,8 @@ function Map(dims, players, seed) {
                     if (dr == 0 && dc == 0) continue;
 
                     // Check Out of Bounds
-                    if (row + dr < 0 || row + dr > dims.h-1) continue;
-                    if (col + dc < 0 || col + dc > dims.w-1) continue;
+                    if (row + dr < 0 || row + dr > dims.r-1) continue;
+                    if (col + dc < 0 || col + dc > dims.c-1) continue;
 
                     // for readability 
                     var oldAdjacentTile =  oldmap[row + dr][col + dc];
@@ -168,9 +168,9 @@ function Map(dims, players, seed) {
         }
 
         // check if there are any more provinces left to fill, and if not, break.
-        var emptycount = dims.h*dims.w;
-        for (var row = 0; row < dims.h; row++) {
-            for (var col = 0; col < dims.w; col++) {
+        var emptycount = dims.r*dims.c;
+        for (var row = 0; row < dims.r; row++) {
+            for (var col = 0; col < dims.c; col++) {
                 if (ownerByHexMap[row][col] !== -1) emptycount-=1;
             }
         }
@@ -181,8 +181,8 @@ function Map(dims, players, seed) {
     // find out what hexes belong to what provinces, and also which provinces border one another
     console.time("Calculating interesting Province data");
 
-    for (var y = 0; y < dims.h; y++) {
-        for (var x = 0; x < dims.w; x++) {
+    for (var y = 0; y < dims.r; y++) {
+        for (var x = 0; x < dims.c; x++) {
             // for readability
             var curTileOwner = ownerByHexMap[y][x];
 
@@ -225,8 +225,8 @@ function Map(dims, players, seed) {
 
                 // Check if the tile being referenced is on the outside of the board
                 var isOnEdgeOfBoard = (
-                    y2 < 0 || y2 > dims.h-1 ||
-                    x2 < 0 || x2 > dims.w-1
+                    y2 < 0 || y2 > dims.r-1 ||
+                    x2 < 0 || x2 > dims.c-1
                 );
                 if (!isOnEdgeOfBoard) {
                     // for readability
@@ -283,14 +283,25 @@ function Map(dims, players, seed) {
         // on a scale of 1-10, how "dense" should the map be?
         // By the way, this is suuuper vague, and it only starts to matter on larger maps. ish.
         // Like I said, *very* vague
-        var DENSITY = 5
+        var DENSITY = 5;
 
         // Pick some arbitrary provinces
-        var startProvinces = getRandomSeededArrayOfInts(2 + Math.floor(provinces.length / (11 - DENSITY)),0,provinces.length);
+        //var startProvinces = getRandomSeededArrayOfInts(2 + Math.floor(provinces.length / (11 - DENSITY)),0,provinces.length);
 
-        // NOTE:
-        // The startProvinces choice could be improved by selecting provinces based on map location
-        // i.e using the tilemap to select provinces at various key points on the map
+        // Select provinces based on the corners on the map
+        var startProvinces = [];
+        for (var i = 0; i <= 3; i++) {
+            for (var j = 0; j <= 3; j++) {
+                startProvinces.push(ownerByHexMap
+                    [Math.floor( (dims.r-1) / 3 * i )]
+                    [Math.floor( (dims.c-1) / 3 * j )]
+                );
+            }
+        }
+        startProvinces = uniq(startProvinces);
+        while (startProvinces.length > 10) {
+            startProvinces.splice( getRandomSeededInt(0,startProvinces.length), 1 );
+        }
 
         // Using magical graph algorithms, we can find the shortest paths between them!
         // First, we have to generate a "map" object that the graph algo can work nicely with:
@@ -310,7 +321,7 @@ function Map(dims, players, seed) {
         for (var i = 0; i < startProvinces.length; i++) {
             for (var j = i+1; j < startProvinces.length; j++) {
                 // let's add some randomness, for giggles
-                if ( getRandomSeededInt(0,5) === 0 ) continue;
+                // if ( getRandomSeededInt(0,5) === 0 ) continue;
 
                 shortestPaths.push(
                     province_graph.findShortestPath(startProvinces[i], startProvinces[j])
