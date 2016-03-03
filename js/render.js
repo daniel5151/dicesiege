@@ -53,6 +53,8 @@ var Renderer = function () {
     // ---- SHARED ASSETS ---- //
     var pallete;
 
+    this.GET_PALLETE = function () { return pallete; }
+
     // ---- BOARD VARS ---- //
 
     // This value actually doesn't matter...
@@ -606,6 +608,9 @@ var Renderer = function () {
     this.init.all = function () {
         // ------ SHARED ASSETS ------ //
         pallete = Utils.generatePallete(Game.Data.n_players);
+
+        console.log(pallete);
+
         pallete.unshift("white");
 
         this.board();
