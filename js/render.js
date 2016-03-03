@@ -218,8 +218,8 @@ var Renderer = function () {
         ProvinceOutline:function () {
             /* OUTLINE */
             var outlinePoints = [];
-            for (var x = 0; x < Game.Data.dims.w; x++) {
-                for (var y = 0; y < Game.Data.dims.h; y++) {
+            for (var x = 0; x < Game.Data.dims.c; x++) {
+                for (var y = 0; y < Game.Data.dims.r; y++) {
                     // TODO: Add some if statement to skip internal tiles
 
                     // calculate coordinates of each corner
@@ -431,8 +431,8 @@ var Renderer = function () {
             HexW = hexradius * Math.cos(Math.PI / 6);
             HexH = hexradius * Math.sin(Math.PI / 6);
 
-            var BaseBoardW = (HexW * (Game.Data.dims.w * 2 + 1) );
-            var BaseBoardH = (HexH * (Game.Data.dims.h * 3    ) );
+            var BaseBoardW = (HexW * (Game.Data.dims.c * 2 + 1) );
+            var BaseBoardH = (HexH * (Game.Data.dims.r * 3    ) );
 
             var scale = Math.min(
                 two.width  / BaseBoardW * 0.975,    // 0.975 is a nice padding value
