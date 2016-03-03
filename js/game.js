@@ -427,6 +427,9 @@ var GenGameData = function(BOARD_DIMENSIONS,PLAYERS,SEED) {
 
     this.ownerByHexMap = raw_map.ownerByHexMap;
 
+    this.turn = 1;
+    this.current_player = 1;
+
     this.History = [];
 }
 
@@ -456,12 +459,27 @@ var GameController = function (GameData) {
 
     var selectedPID = null;
     this.Input = {
+        next_turn: function () {
+            // Update turn counter
+            thisGame.Data.turn++;
+
+            // update current player
+            thisGame.Data.current_player++;
+            if (thisGame.Data.current_player > thisGame.Data.n_players) thisGame.Data.current_player = 1;
+
+            // Indicate whose turn it is
+            Render.ReRender.current_turn.update(thisGame.Data.current_player);
+        },
         province: {
             clicked: function (clickedPID) {
                 if (selectedPID != clickedPID) {
                     // If selecting a province
                     if (selectedPID == null) {
-                        // Let's sanity check and see if the province can even be selected for an attack:
+                        // Is the player selecting a province he owns?
+                        if (Utils.provinceFromPID(clickedPID).owner != thisGame.Data.current_player) return;
+
+                        // Can the province can even be selected for an attack?
+                        // i.e, does it border any enemy provinces?
                         var notSelectable = Utils.provinceFromPID(clickedPID).bordering.every(function(borderPID){
                             return Utils.provinceFromPID(borderPID).owner === Utils.provinceFromPID(clickedPID).owner;
                         });

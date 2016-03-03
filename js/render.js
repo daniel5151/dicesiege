@@ -99,13 +99,13 @@ var Renderer = function () {
             var stroke    = props.stroke    || "black";
             var linewidth = props.linewidth || 2;
 
-            this.two_rect = two.makeRectangle(0, 0, w, h);
+            this.two_elem = two.makeRectangle(0, 0, w, h);
 
-            this.two_rect.fill      = fill;
-            this.two_rect.stroke    = stroke;
-            this.two_rect.linewidth = linewidth;
+            this.two_elem.fill      = fill;
+            this.two_elem.stroke    = stroke;
+            this.two_elem.linewidth = linewidth;
 
-            this.two_rect.translation = new Two.Vector(x,y);
+            this.two_elem.translation = new Two.Vector(x,y);
 
             two.update();
         },
@@ -127,7 +127,7 @@ var Renderer = function () {
                 alignment: alignment
             });
 
-            this.two_text = two.makeGroup();
+            this.two_elem = two.makeGroup();
 
             // Now, we extend Two.js's text rendering system with some *flavor* ;)
 
@@ -144,12 +144,14 @@ var Renderer = function () {
                 bounding_box.stroke    = stroke   
                 bounding_box.linewidth = linewidth
 
-                this.two_text.add(bounding_box);
+                this.two_elem.add(bounding_box);
+
+                this.two_bounding_box = bounding_box;
             }
 
-            this.two_text.add(text_obj);
+            this.two_elem.add(text_obj);
 
-            this.two_text.translation = new Two.Vector(x,y);
+            this.two_elem.translation = new Two.Vector(x,y);
 
             two.update();
 
@@ -158,7 +160,7 @@ var Renderer = function () {
             var self = this;
             this.updateClassList = function () {
                 if ( two.type === Two.Types.svg && props.classes !== undefined) {
-                    var elem = self.two_text._renderer.elem
+                    var elem = self.two_elem._renderer.elem
                     for (var i = 0; i < props.classes.length; i++) {
                         elem.classList.add(props.classes[i]);
                     }
@@ -169,7 +171,7 @@ var Renderer = function () {
             this.addEventListener = function (event, f, preventDefault) {
                 if (two.type !== Two.Types.svg) return;
 
-                self.two_text._renderer.elem.addEventListener(event, f, preventDefault);
+                self.two_elem._renderer.elem.addEventListener(event, f, preventDefault);
             }
         },
         Path:function (two, props) {
@@ -456,16 +458,22 @@ var Renderer = function () {
 
             console.time("Resizing UI");
 
-            // this is an ugly workaround for now
-            r_objects["ui"]["generate_new_map"].two_text.translation.set(
-                two.width - 30*("Generate New Map".length*0.35),
-                two.height - 30
-            );
-            r_objects["ui"]["generate_new_map"].two_text.scale += 0.000001;
+            r_objects["ui"]["generate_new_map"].two_elem.translation.set(80,50);
+            r_objects["ui"]["current_turn_text"].two_elem.translation.set(100,two.height - 30);
+            r_objects["ui"]["current_turn_rect"].two_elem.translation.set(220,two.height - 30);
+            r_objects["ui"]["next_turn"].two_elem.translation.set(two.width - 100,two.height - 30);
+
+            // this "scale" thing is an ugly workaround for now
+            for (var obj in r_objects["ui"]) r_objects["ui"][obj].two_elem.scale += 0.000001;
 
             two.update();
 
             console.timeEnd("Resizing UI");
+        },
+        current_turn: {
+            update: function (owner) {
+                r_objects["ui"]["current_turn_rect"].two_elem.fill = pallete[owner];
+            }
         },
         province: {
             color: function (provinceID, color, suppressUpdate) {
@@ -557,7 +565,7 @@ var Renderer = function () {
         for (var province in r_objects["board"]["provinces"]) {
             r_groups["board"].add(
                 r_objects["board"]["provinces"][province].PathPrimitive.two_path,
-                r_objects["board"]["provinces"][province].TextPrimitive.two_text
+                r_objects["board"]["provinces"][province].TextPrimitive.two_elem
             );
 
             r_objects["board"]["provinces"][province].TextPrimitive.updateClassList();
@@ -571,7 +579,7 @@ var Renderer = function () {
         // Push all of the province text to the foreground (so it doesn't clip behind provinces)
         for (var province in r_objects["board"]["provinces"]) {
             r_groups["foregrounds"]["board"]
-                .add(r_objects["board"]["provinces"][province].TextPrimitive.two_text);
+                .add(r_objects["board"]["provinces"][province].TextPrimitive.two_elem);
         }
 
         console.timeEnd("Total Board Rendering Time");
@@ -579,6 +587,8 @@ var Renderer = function () {
 
     this.init.ui = function () {
         r_objects["ui"] = {};
+
+        // x,y coordinates of each thing are set later in resize
 
         // Seed display
         r_objects["ui"]["seed"] = new Primitives.Text(two, {
@@ -593,9 +603,7 @@ var Renderer = function () {
 
         // Reinitialize map button
         r_objects["ui"]["generate_new_map"] = new Primitives.Text(two, {
-            x:two.width - 30*("Generate New Map".length*0.35),
-            y:two.height - 30,
-            text:"Generate New Map",
+            text:"New Game",
             font_size: 30,
             classes:["button-text"],
             bounding_box: {
@@ -603,6 +611,28 @@ var Renderer = function () {
             }
         });
         r_objects["ui"]["generate_new_map"].updateClassList();
+
+        // Current player indicator
+        r_objects["ui"]["current_turn_text"] = new Primitives.Text(two, {
+            text:"Current Player",
+            font_size: 20
+        });
+        r_objects["ui"]["current_turn_rect"] = new Primitives.Rect(two, {
+            w: 25,
+            h: 25,
+            fill: pallete[1]
+        });
+
+        // Next turn button
+        r_objects["ui"]["next_turn"] = new Primitives.Text(two, {
+            text:"Next Turn",
+            font_size: 30,
+            classes:["button-text"],
+            bounding_box: {
+                fill:"lightblue"
+            }
+        });
+        r_objects["ui"]["next_turn"].updateClassList();
     }
 
     this.init.all = function () {
@@ -812,9 +842,13 @@ var Renderer = function () {
         */
 
         r_objects["ui"]["generate_new_map"].addEventListener("click",function(){
-            console.log("triggered");
+            console.log("New Map Generation Triggered");
             reinit();
-        })
+        });
+        r_objects["ui"]["next_turn"].addEventListener("click",function(){
+            console.log("Next Turn, let's go");
+            Game.Input.next_turn();
+        });
     }
 };
 
