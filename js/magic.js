@@ -27,6 +27,16 @@ function getRandomSeededArrayOfInts(length, min, max) {
         return getRandomSeededInt(min, max);
     })
 }
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+
+// http://stackoverflow.com/a/15106541
+var randomObjProperty = function (obj) {
+    var keys = Object.keys(obj)
+    return obj[keys[ keys.length * Math.random() << 0]];
+};
+
 // http://stackoverflow.com/a/1484514
 function getRandomColor() {
     var letters = '0123456789ABCDEF'.split('');

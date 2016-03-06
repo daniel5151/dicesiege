@@ -99,7 +99,11 @@ var Renderer = function () {
             var stroke    = props.stroke    || "black";
             var linewidth = props.linewidth || 2;
 
-            this.two_elem = two.makeRectangle(0, 0, w, h);
+            var rounded   = !!props.rounded;
+            var radius    = props.radius    || 5;
+
+            if (!rounded) this.two_elem = two.makeRectangle       (0, 0, w, h        );
+            else          this.two_elem = two.makeRoundedRectangle(0, 0, w, h, radius);
 
             this.two_elem.fill      = fill;
             this.two_elem.stroke    = stroke;
@@ -108,6 +112,14 @@ var Renderer = function () {
             this.two_elem.translation = new Two.Vector(x,y);
 
             two.update();
+
+            // Lastly, magical touch event handlers ngggghhhhhhhnggg
+            var self = this;
+            this.addEventListener = function (event, f, preventDefault) {
+                if (two.type !== Two.Types.svg) return;
+
+                self.two_elem._renderer.elem.addEventListener(event, f, preventDefault);
+            }
         },
         Text:function(two, props) {
             var text       = props.text      || "LOL POOP" 
@@ -197,14 +209,14 @@ var Renderer = function () {
                 ));
             };
 
-            this.two_path = two.makePath(anchoredPoints, false);
+            this.two_elem = two.makePath(anchoredPoints, false);
 
             if (noStroke) linewidth = 0;
             if (noFill)   fill = "rgba(0,0,0,0)";
 
-            this.two_path.linewidth = linewidth;
-            this.two_path.stroke = stroke;
-            this.two_path.fill = fill;
+            this.two_elem.linewidth = linewidth;
+            this.two_elem.stroke = stroke;
+            this.two_elem.fill = fill;
 
             two.update();
 
@@ -212,7 +224,7 @@ var Renderer = function () {
             this.addEventListener = function (event, f, preventDefault) {
                 if (two.type !== Two.Types.svg) return;
 
-                self.two_path._renderer.elem.addEventListener(event, f, preventDefault);
+                self.two_elem._renderer.elem.addEventListener(event, f, preventDefault);
             }
         }
     };
@@ -259,7 +271,7 @@ var Renderer = function () {
                 linewidth: hexradius/10
             });
 
-            this.two_path = outline.two_path;
+            this.two_elem = outline.two_elem;
         },
         Province:function (props) {
             var provinceID = props.id;
@@ -271,7 +283,7 @@ var Renderer = function () {
             var tiles    = province.tiles;
 
             // This is the end goal.
-            // We need to populate this array with the two_path for the province shape!
+            // We need to populate this array with the two_elem for the province shape!
             var province_points = [];
 
             // Let's do work for each tile!
@@ -335,16 +347,27 @@ var Renderer = function () {
             var textX = centroid[0];
             var textY = centroid[1];
 
+            this.RectPrimitive = new Primitives.Rect(two,{
+                x: textX,
+                y: textY-1,
+                w: 25,
+                h: 25,
+                fill: "rgba(255,255,255,0.75)",
+                linewidth: 1,
+                rounded: true
+            });
+
             this.TextPrimitive = new Primitives.Text(two,{
                 x: textX,
                 y: textY,
-                text: provinceID,
+                text: province.troops,
                 classes:["province-text"],
-                bounding_box: true
+                font_size: 16
             });
 
+            var rendergroup = two.makeGroup(this.PathPrimitive.two_elem, this.TextPrimitive.two_elem, this.RectPrimitive.two_elem);
 
-
+            this.two_render_group = rendergroup;
 
 
 
@@ -354,6 +377,7 @@ var Renderer = function () {
             this.addEventListener = function(event, f, preventDefault) {
                 self.PathPrimitive.addEventListener(event, f, preventDefault);
                 self.TextPrimitive.addEventListener(event, f, preventDefault);
+                self.RectPrimitive.addEventListener(event, f, preventDefault);
             }
         }
     }
@@ -403,7 +427,7 @@ var Renderer = function () {
             return corners;
         },
         getPathFromPID: function (provinceID) {
-            return r_objects.board.provinces[provinceID].PathPrimitive.two_path;
+            return r_objects.board.provinces[provinceID].PathPrimitive.two_elem;
         }
     }
 
@@ -484,6 +508,15 @@ var Renderer = function () {
                 Utils.getPathFromPID(provinceID).fill = pallete[owner];
                 if (!suppressUpdate) two.update();
             },
+            troops: function (provinceID, n_troops) {
+                // this is gross... but whaaaatever.
+                r_objects.board.provinces[provinceID].TextPrimitive.two_elem.children[0]._renderer.elem.innerHTML = n_troops;
+                two.update();
+            },
+            post_attack: function (province) {
+                ReRender.province.owner (province.id, province.owner );
+                ReRender.province.troops(province.id, province.troops);
+            },
             selected: function (provinceID, selected) {
                 if (selected) {
                     var percent = 0;
@@ -554,7 +587,7 @@ var Renderer = function () {
 
         // Add outline first. This should always stay underneath everything
         r_groups["board"]
-            .add(r_objects["board"]["outline"].two_path);
+            .add(r_objects["board"]["outline"].two_elem);
 
         // Make a background level for the board
         r_groups["backgrounds"]["board"] = two.makeGroup();
@@ -564,8 +597,7 @@ var Renderer = function () {
         // Add provinces
         for (var province in r_objects["board"]["provinces"]) {
             r_groups["board"].add(
-                r_objects["board"]["provinces"][province].PathPrimitive.two_path,
-                r_objects["board"]["provinces"][province].TextPrimitive.two_elem
+                r_objects["board"]["provinces"][province].two_render_group
             );
 
             r_objects["board"]["provinces"][province].TextPrimitive.updateClassList();
@@ -579,6 +611,7 @@ var Renderer = function () {
         // Push all of the province text to the foreground (so it doesn't clip behind provinces)
         for (var province in r_objects["board"]["provinces"]) {
             r_groups["foregrounds"]["board"]
+                .add(r_objects["board"]["provinces"][province].RectPrimitive.two_elem)
                 .add(r_objects["board"]["provinces"][province].TextPrimitive.two_elem);
         }
 
@@ -655,6 +688,8 @@ var Renderer = function () {
     };
 
     this.reinit = function () {
+        animationQueue = [];
+
         this.init.board();
         this.init.ui();
 

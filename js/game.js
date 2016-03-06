@@ -79,7 +79,8 @@ function Map(dims, players, seed) {
                     tiles:[[randomC,randomR]],
                     bordering:[],
                     owner:0,        // updated later
-                    id:provinceID
+                    id:provinceID,
+                    troops: 1
                 });
 
                 provinceID++;
@@ -279,6 +280,16 @@ function Map(dims, players, seed) {
 
     var HEURISTIC = 1;
 
+    // Contains useful info related to each player
+    var player_info = {};
+    for (var player = 1; player <= players; player++) {
+        player_info[player] = {
+            ownedPIDs:[],
+            troops:0,
+            reserves: 0
+        }
+    }
+
     if (HEURISTIC == 1) {
         // on a scale of 1-10, how "dense" should the map be?
         // By the way, this is suuuper vague, and it only starts to matter on larger maps. ish.
@@ -338,7 +349,23 @@ function Map(dims, players, seed) {
         // Finally, let's assign a player to each province
         var playerCounter = 0; // needed to give each player correct ammount of land
         selected_provinces.forEach(function(selectedPID){
-            provinces[selectedPID].owner = (playerCounter++ % players) + 1;
+            var newOwner = (playerCounter++ % players) + 1;
+            
+            provinces[selectedPID].owner = newOwner;
+
+            // While we are here, let's throw a random number of troops
+            // onto the province. 
+            // TODO:: Fix distribution to be, you know, FAIR?!
+
+            // By default, each province has a single troop, with a max of 
+            // 6, so for now, just add a random number of troops from 0-5
+            // gg wp, good game balance 20/10
+            var troops = getRandomSeededInt(1,7);
+            provinces[selectedPID].troops = troops; 
+
+            // Record this info for easier retrieval
+            player_info[newOwner].ownedPIDs.push(selectedPID);
+            player_info[newOwner].troops += troops;
         });
     }
     else if (HEURISTIC == 0) {
@@ -383,6 +410,7 @@ function Map(dims, players, seed) {
 
     console.time("Creating object of selected provinces");
 
+    // The final province object
     var provinces_obj = {};
 
     provinces.forEach(function(province){
@@ -412,6 +440,7 @@ function Map(dims, players, seed) {
     this.provinces = provinces_obj;
     this.ownerByHexMap = ownerByHexMap;
     this.dims = dims;
+    this.player_info = player_info;
 }
 
 var GenGameData = function(BOARD_DIMENSIONS,PLAYERS,SEED) {
@@ -419,6 +448,7 @@ var GenGameData = function(BOARD_DIMENSIONS,PLAYERS,SEED) {
     var raw_map = new Map(BOARD_DIMENSIONS,PLAYERS,SEED);
 
     this.n_players   = PLAYERS;
+    this.player_info = raw_map.player_info;
 
     this.seed        = SEED;
     this.dims        = raw_map.dims;
@@ -457,6 +487,36 @@ var GameController = function (GameData) {
     var selectedPID = null;
     this.Input = {
         next_turn: function () {
+            // Alias for easier code
+            var player_info = thisGame.Data.player_info[thisGame.Data.current_player];
+
+            // Give the player who just had his turn troops based
+            // on the number of provinces they own
+            var troop_to_assign = player_info.ownedPIDs.length + player_info.reserves;
+
+            var assignable_PIDs = player_info.ownedPIDs.filter(function(PID){
+                return (Utils.provinceFromPID(PID).troops < 6)
+            });
+
+            for (;troop_to_assign > 0; troop_to_assign--) {
+                if (assignable_PIDs.length == 0) {
+                    player_info.reserves = troop_to_assign;
+                    console.log(player_info.reserves);
+                    break; 
+                }
+
+                var randomIndex = getRandomInt(0,assignable_PIDs.length);
+                var PID = assignable_PIDs[randomIndex];
+                var province = Utils.provinceFromPID(PID);
+
+                province.troops++;
+
+                Render.ReRender.province.troops(PID, province.troops);
+
+                if (province.troops == 6) assignable_PIDs.splice(randomIndex,1);
+            }
+            
+
             // Update turn counter
             thisGame.Data.turn++;
 
@@ -472,6 +532,8 @@ var GameController = function (GameData) {
                 var selectedP = Utils.provinceFromPID(selectedPID);
                 var  clickedP = Utils.provinceFromPID( clickedPID);
 
+                console.log(clickedP)
+
                 if (selectedPID != clickedPID) {
                     // If selecting a province
                     if (selectedPID == null) {
@@ -480,11 +542,13 @@ var GameController = function (GameData) {
 
                         // Can the province can even be selected for an attack?
                         // i.e, does it border any enemy provinces?
-                        var notSelectable = clickedP.bordering.every(function(borderPID){
+                        var noEnemyBorders = clickedP.bordering.every(function(borderPID){
                             return Utils.provinceFromPID(borderPID).owner === clickedP.owner;
                         });
+                        if (noEnemyBorders) return;
 
-                        if (notSelectable) return;
+                        // i.e does it have more than one troop?
+                        if (clickedP.troops == 1) return;
 
                         selectedPID = clickedPID;
                         Render.ReRender.province.selected(clickedPID, true);
@@ -515,32 +579,34 @@ var GameController = function (GameData) {
 
     var Moves = {
         attack:function (attackPID, defendPID) {
-            // what we should be doing is checking the number of soldiers each
-            // person has stationed at the province, but becuase I am lazy,
-            // I'm not going to implement that now, and instead, outcomes
-            // will be randomly chosen by dice roll
-
-            var RandomNum = 4 // Decided fairly by Dice Roll
-
-            var success = !!Math.floor(RandomNum*10) % 2;
-
             var attackP = Utils.provinceFromPID(attackPID);
             var defendP = Utils.provinceFromPID(defendPID);
 
-            if (success) {
-                // Defender loses all soldiers stationed in that province
-                    // Code
+            var attackPWR = 0;
+            var defendPWR = 0;
+
+            for (var i = 0; i < attackP.troops; i++) attackPWR += getRandomInt(1,7);
+            for (var i = 0; i < defendP.troops; i++) defendPWR += getRandomInt(1,7);
+
+            var success = attackPWR > defendPWR;
+
+            console.log("Attack: " + attackPWR);
+            console.log("Defend: " + defendPWR);
+            console.log("Victor: " + (success)?"Attacker":"Defender" );
+
+            if (success) {                
                 // Transfer ownership of the province to attacker
                 defendP.owner = attackP.owner;
 
                 // Attacker moves all soldiers except one to the new province
-                    // Code
+                defendP.troops = attackP.troops - 1;
+
                 // One attacker soldier is left behind.
-                    // Code
+                attackP.troops = 1;
 
                 // Rerender the two provinces
-                    // Province one rerender
-                Render.ReRender.province.owner(defendPID, defendP.owner);
+                Render.ReRender.province.post_attack(defendP);
+                Render.ReRender.province.post_attack(attackP);
 
                 // Record history
                 History.addEvent("attack_success",{
@@ -551,9 +617,9 @@ var GameController = function (GameData) {
                 })
             } else {
                 // Attacker loses all soldiers except one in his province
-                    // Code
+                attackP.troops = 1;
                 // Rerender
-                    // Code
+                Render.ReRender.province.post_attack(attackP);
             }
 
             // Deselect the attacker
