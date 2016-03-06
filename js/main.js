@@ -1,8 +1,8 @@
 var Game;
 var Render;
 
-var SCALE = 15;
-var PLAYERS = 3;
+var SCALE = 20;
+var PLAYERS = 5;
 if (SCALE < 5 || SCALE =="" || !parseInt(SCALE)) SCALE = 15;
 var BOARD_DIMENSIONS = {
     c:3*SCALE,
