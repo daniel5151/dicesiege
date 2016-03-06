@@ -454,9 +454,6 @@ var GameController = function (GameData) {
         } 
     }
 
-    // DEBUG STUFF
-        this.GET_SELECTED_PROVINCE = function () { return selectedPID; }
-
     var selectedPID = null;
     this.Input = {
         next_turn: function () {
@@ -472,16 +469,19 @@ var GameController = function (GameData) {
         },
         province: {
             clicked: function (clickedPID) {
+                var selectedP = Utils.provinceFromPID(selectedPID);
+                var  clickedP = Utils.provinceFromPID( clickedPID);
+
                 if (selectedPID != clickedPID) {
                     // If selecting a province
                     if (selectedPID == null) {
                         // Is the player selecting a province he owns?
-                        if (Utils.provinceFromPID(clickedPID).owner != thisGame.Data.current_player) return;
+                        if (clickedP.owner != thisGame.Data.current_player) return;
 
                         // Can the province can even be selected for an attack?
                         // i.e, does it border any enemy provinces?
-                        var notSelectable = Utils.provinceFromPID(clickedPID).bordering.every(function(borderPID){
-                            return Utils.provinceFromPID(borderPID).owner === Utils.provinceFromPID(clickedPID).owner;
+                        var notSelectable = clickedP.bordering.every(function(borderPID){
+                            return Utils.provinceFromPID(borderPID).owner === clickedP.owner;
                         });
 
                         if (notSelectable) return;
@@ -493,10 +493,10 @@ var GameController = function (GameData) {
                     // If attacking...
                     else {
                         // First, we should check if user is aiming at himself
-                        if (Utils.provinceFromPID(selectedPID).owner == Utils.provinceFromPID(clickedPID).owner) return;
+                        if (selectedP.owner == clickedP.owner) return;
 
                         // Check if there is a border b/w the two
-                        var isBorder = Utils.provinceFromPID(selectedPID).bordering.some(function(borderPID){
+                        var isBorder = selectedP.bordering.some(function(borderPID){
                             return borderPID == clickedPID;
                         });
 
@@ -524,11 +524,14 @@ var GameController = function (GameData) {
 
             var success = !!Math.floor(RandomNum*10) % 2;
 
+            var attackP = Utils.provinceFromPID(attackPID);
+            var defendP = Utils.provinceFromPID(defendPID);
+
             if (success) {
                 // Defender loses all soldiers stationed in that province
                     // Code
                 // Transfer ownership of the province to attacker
-                Utils.provinceFromPID(defendPID).owner = Utils.provinceFromPID(attackPID).owner;
+                defendP.owner = attackP.owner;
 
                 // Attacker moves all soldiers except one to the new province
                     // Code
@@ -537,14 +540,14 @@ var GameController = function (GameData) {
 
                 // Rerender the two provinces
                     // Province one rerender
-                Render.ReRender.province.owner(defendPID, Utils.provinceFromPID(defendPID).owner);
+                Render.ReRender.province.owner(defendPID, defendP.owner);
 
                 // Record history
                 History.addEvent("attack_success",{
                     attackPID: attackPID,
                     defendPID: defendPID,
-                    attacker: Utils.provinceFromPID(attackPID).owner,
-                    defender: Utils.provinceFromPID(defendPID).owner
+                    attacker: attackP.owner,
+                    defender: defendP.owner
                 })
             } else {
                 // Attacker loses all soldiers except one in his province
