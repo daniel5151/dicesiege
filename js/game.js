@@ -498,7 +498,7 @@ var GameController = function (GameData) {
                 return (Utils.provinceFromPID(PID).troops < 6)
             });
 
-            for (;troop_to_assign > 0; troop_to_assign--) {
+            for (;troop_to_assign > 0; troop_to_assign--) {                
                 if (assignable_PIDs.length == 0) {
                     player_info.reserves = troop_to_assign;
                     console.log(player_info.reserves);
@@ -521,9 +521,15 @@ var GameController = function (GameData) {
             thisGame.Data.turn++;
 
             // update current player
-            thisGame.Data.current_player++;
-            if (thisGame.Data.current_player > thisGame.Data.n_players) thisGame.Data.current_player = 1;
+            for (;;) {
+                thisGame.Data.current_player++;
+                if (thisGame.Data.current_player > thisGame.Data.n_players) thisGame.Data.current_player = 1;
 
+                if (thisGame.Data.player_info[thisGame.Data.current_player].ownedPIDs.length == 0) thisGame.Data.current_player++;
+                else break;
+            }
+
+            
             // Indicate whose turn it is
             Render.ReRender.current_turn.update(thisGame.Data.current_player);
         },
@@ -582,6 +588,9 @@ var GameController = function (GameData) {
             var attackP = Utils.provinceFromPID(attackPID);
             var defendP = Utils.provinceFromPID(defendPID);
 
+            var attacker = attackP.owner;
+            var defender = defendP.owner;
+
             var attackPWR = 0;
             var defendPWR = 0;
 
@@ -590,13 +599,23 @@ var GameController = function (GameData) {
 
             var success = attackPWR > defendPWR;
 
+            success = 1;
+
             console.log("Attack: " + attackPWR);
             console.log("Defend: " + defendPWR);
             console.log("Victor: " + (success)?"Attacker":"Defender" );
 
             if (success) {                
                 // Transfer ownership of the province to attacker
-                defendP.owner = attackP.owner;
+                defendP.owner = attacker;
+
+                var attacker_info = thisGame.Data.player_info[attacker];
+                var defender_info = thisGame.Data.player_info[defender];
+
+                    // deletes province from defender, and appends it to attacker
+                attacker_info.ownedPIDs.push(
+                    defender_info.ownedPIDs.splice(defender_info.ownedPIDs.indexOf(defendPID), 1)[0]
+                );
 
                 // Attacker moves all soldiers except one to the new province
                 defendP.troops = attackP.troops - 1;
@@ -612,8 +631,8 @@ var GameController = function (GameData) {
                 History.addEvent("attack_success",{
                     attackPID: attackPID,
                     defendPID: defendPID,
-                    attacker: attackP.owner,
-                    defender: defendP.owner
+                    attacker: attacker,
+                    defender: defender
                 })
             } else {
                 // Attacker loses all soldiers except one in his province
